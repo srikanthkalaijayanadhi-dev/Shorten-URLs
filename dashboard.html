@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="assets/supabase.js"></script>
     <script src="assets/main.js"></script>
+    <script src="assets/ads.js" defer></script>
 </head>
 <body class="flex flex-col">
 
@@ -49,7 +50,7 @@
                 <a id="admin-btn" href="admin.html" class="btn btn-secondary w-full mt-4 hidden" style="font-size:0.9rem;">Go to Admin Panel</a>
             </div>
 
-            <div class="ad-placeholder" style="min-height:200px;">Ad (300x250)</div>
+            <div class="ad-slot-sidebar ad-placeholder" style="min-height:200px;">Ad (300x250)</div>
         </div>
 
         <!-- Main Content -->
@@ -77,6 +78,9 @@
                 </div>
             </div>
 
+            <!-- Global Square Ad -->
+            <div class="ad-slot-square ad-placeholder">Advertisement (300x250)</div>
+ 
             <!-- Chart Card -->
             <div class="card">
                 <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.25rem;">
@@ -121,6 +125,7 @@
                                 <th>Original URL</th>
                                 <th>Clicks</th>
                                 <th>Status</th>
+                                <th style="text-align:right;">Settings</th>
                             </tr>
                         </thead>
                         <tbody id="links-table-body"></tbody>
@@ -135,6 +140,49 @@
         </div>
     </div>
 </main>
+
+<!-- Settings Modal -->
+<div id="settings-modal" class="modal-overlay hidden">
+    <div class="card" style="max-width:32rem;width:100%;margin:2rem auto;position:relative;">
+        <button onclick="closeModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--secondary-color);">&times;</button>
+        <h2 class="font-bold mb-4">⚙️ Link Settings</h2>
+        <form id="settings-form" class="flex-col gap-4">
+            <input type="hidden" id="link-id">
+            <div>
+                <label class="text-sm font-medium">⏱ Custom Timer (seconds)</label>
+                <input id="custom-timer" type="number" class="input" placeholder="Global default is 15s" min="5" max="60">
+                <p class="text-secondary" style="font-size:0.75rem;">Leave empty to use global default.</p>
+            </div>
+            <div>
+                <label class="text-sm font-medium">📄 Number of Ad Pages</label>
+                <select id="custom-pages" class="input">
+                    <option value="">Global Default</option>
+                    <option value="1">1 Page</option>
+                    <option value="2">2 Pages</option>
+                    <option value="3">3 Pages</option>
+                    <option value="4">4 Pages</option>
+                    <option value="5">5 Pages</option>
+                </select>
+                <p class="text-secondary" style="font-size:0.75rem;">Controls how many times the user sees a countdown.</p>
+            </div>
+            <button type="submit" class="btn btn-primary w-full">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+</style>
 
 <footer>
     <div class="footer-inner text-secondary text-sm">
@@ -163,6 +211,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <td class="truncate text-secondary" style="max-width:180px;" title="${link.original_url}">${link.original_url}</td>
                     <td class="font-bold">${link.clicks || 0}</td>
                     <td><span class="badge ${link.status === 'banned' ? 'badge-danger' : 'badge-success'}">${link.status}</span></td>
+                    <td style="text-align:right;">
+                        <button class="btn btn-secondary py-1 px-3" onclick="openSettings('${link.id}', ${link.custom_timer || '""'}, '${link.custom_pages || ""}')">⚙️</button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -224,6 +275,37 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         document.getElementById('loading').innerText = "Error loading dashboard.";
         console.error(err);
+    }
+});
+
+function openSettings(id, timer, pages) {
+    document.getElementById('link-id').value = id;
+    document.getElementById('custom-timer').value = timer;
+    document.getElementById('custom-pages').value = pages;
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('settings-modal').classList.add('hidden');
+}
+
+document.getElementById('settings-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('link-id').value;
+    const timer = document.getElementById('custom-timer').value || null;
+    const pages = document.getElementById('custom-pages').value || null;
+    
+    try {
+        const { error } = await window.supabaseClient
+            .from('links')
+            .update({ custom_timer: timer, custom_pages: pages })
+            .eq('id', id);
+            
+        if (error) throw error;
+        alert('Settings updated successfully!');
+        window.location.reload();
+    } catch(err) {
+        alert('Failed to update: ' + err.message);
     }
 });
 </script>

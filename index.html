@@ -14,9 +14,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/supabase.js"></script>
     <script src="assets/main.js"></script>
-    <script async src="https://ss.mrmnd.com/interstitial.js" data-mndintid="2b85e1ed-b9f7-47e0-a3a2-2bb8de405809"></script>
-    <script async src="https://ss.mrmnd.com/native.js"></script>
-    <script async src="https://ss.mrmnd.com/static/7384f9cf-5c3b-4538-8617-ada8d46969fd.js"></script>
+    <script src="assets/ads.js" defer></script>
 </head>
 <body>
 
@@ -48,9 +46,9 @@
 <!-- MAIN -->
 <main class="flex-1 flex flex-col">
 
-    <!-- Top Ad -->
+    <!-- Top Banner Ad -->
     <div class="container">
-        <div class="ad-placeholder">Advertisement</div>
+        <div class="ad-slot-top ad-placeholder">Advertisement</div>
     </div>
 
     <!-- Hero Section -->
@@ -90,9 +88,14 @@
         </div>
     </section>
 
-    <!-- Mid Ad -->
+    <!-- Global Square Ad -->
+    <div class="container" style="display:flex;justify-content:center;margin:1.5rem auto;">
+        <div class="ad-slot-square ad-placeholder">Advertisement (300x250)</div>
+    </div>
+
+    <!-- Mid Page Ad -->
     <div class="container">
-        <div class="ad-placeholder" style="min-height:120px;">Advertisement</div>
+        <div class="ad-slot-mid ad-placeholder" style="min-height:120px;">Advertisement</div>
     </div>
 
     <!-- Features -->
@@ -120,6 +123,11 @@
     </section>
 
 </main>
+
+<!-- Bottom Banner Ad -->
+<div class="container">
+    <div class="ad-slot-bottom ad-placeholder">Advertisement</div>
+</div>
 
 <!-- FOOTER -->
 <footer>

@@ -12,11 +12,136 @@
     <script src="assets/supabase.js"></script>
     <script src="assets/main.js"></script>
     <style>
+        /* ── Spinner ── */
         @keyframes spin { to { transform: rotate(360deg); } }
-        .spinner { width:3rem;height:3rem;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem; }
-        /* Ad containers: hidden by default, shown only when ads are enabled */
+        .spinner {
+            width: 3rem; height: 3rem;
+            border: 3px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        /* ── Ad wrappers: hidden until enabled ── */
         .ad-wrapper { display: none; }
         .ad-wrapper.ads-visible { display: block; }
+
+        /* ── Multi-page flow card ── */
+        #flow-card {
+            max-width: 36rem; width: 100%;
+            animation: fadeSlideIn 0.35s ease;
+        }
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── Progress bar ── */
+        .flow-progress-wrap { margin-bottom: 1.5rem; }
+        .flow-steps-label {
+            display: flex; justify-content: space-between;
+            font-size: 0.8rem; color: var(--secondary-color);
+            margin-bottom: 0.5rem; font-weight: 600;
+        }
+        .flow-progress-track {
+            height: 6px; background: var(--border-color);
+            border-radius: 999px; overflow: hidden;
+        }
+        .flow-progress-bar {
+            height: 100%; background: var(--primary-color);
+            border-radius: 999px;
+            transition: width 0.5s cubic-bezier(0.4,0,0.2,1);
+        }
+        .flow-step-dots {
+            display: flex; gap: 0.5rem; justify-content: center; margin-top: 0.6rem;
+        }
+        .flow-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--border-color);
+            transition: background 0.3s, transform 0.3s;
+        }
+        .flow-dot.done  { background: var(--success-color); }
+        .flow-dot.active { background: var(--primary-color); transform: scale(1.4); }
+
+        /* ── Page title ── */
+        .flow-page-title {
+            font-size: clamp(1.1rem, 4vw, 1.6rem);
+            font-weight: 800; margin-bottom: 1.25rem;
+            text-align: center;
+        }
+
+        /* ── Per-page ad slot ── */
+        #page-ad-slot { margin-bottom: 1.25rem; }
+
+        /* ── Timer ring ── */
+        .timer-ring-wrap {
+            display: flex; flex-direction: column; align-items: center;
+            margin-bottom: 1.25rem;
+        }
+        .timer-ring-svg { transform: rotate(-90deg); }
+        .timer-ring-track { fill: none; stroke: var(--border-color); }
+        .timer-ring-fill {
+            fill: none; stroke: var(--primary-color);
+            stroke-linecap: round;
+            transition: stroke-dashoffset 1s linear;
+        }
+        .timer-ring-label {
+            position: absolute; font-size: 2rem; font-weight: 800;
+            color: var(--text-color);
+        }
+        .timer-ring-container {
+            position: relative; display: flex;
+            align-items: center; justify-content: center;
+            width: 110px; height: 110px;
+        }
+        .timer-hint {
+            font-size: 0.85rem; color: var(--secondary-color);
+            margin-top: 0.5rem; font-weight: 500;
+        }
+
+        /* ── Waiting button ── */
+        .btn-waiting {
+            width: 100%; padding: 0.9rem;
+            font-size: 1rem; font-weight: 600;
+            border-radius: var(--radius-md);
+            border: 2px solid var(--border-color);
+            background: var(--card-bg); color: var(--secondary-color);
+            cursor: not-allowed; opacity: 0.7;
+            display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+        }
+
+        /* ── Next / Final button ── */
+        .btn-next-page {
+            width: 100%; padding: 0.9rem; font-size: 1.05rem;
+            font-weight: 700; border-radius: var(--radius-md);
+            background: linear-gradient(135deg, var(--primary-color), #6366f1);
+            color: #fff; border: none; cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 20px rgba(59,130,246,0.35);
+            display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+        }
+        .btn-next-page:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(59,130,246,0.45); }
+        .btn-next-page:active { transform: translateY(0); }
+
+        /* ── Ready state ── */
+        #ready-box { text-align: center; }
+        .ready-icon { font-size: 3rem; margin-bottom: 0.75rem; animation: popIn 0.4s ease; }
+        @keyframes popIn {
+            0%   { transform: scale(0); opacity: 0; }
+            70%  { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(1); }
+        }
+        .ready-text { font-size: 1rem; font-weight: 700; color: var(--success-color); margin-bottom: 1.25rem; }
+
+        /* ── Timer area ad slots ── */
+        .timer-ad-slot {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin: 0.75rem 0;
+            min-height: 90px;
+        }
     </style>
 </head>
 <body class="flex flex-col">
@@ -45,11 +170,13 @@
 
 <main class="flex-1 flex flex-col items-center justify-center" style="padding:1.5rem 1.25rem;">
 
+    <!-- Loading -->
     <div id="loading-state" class="text-center">
         <div class="spinner"></div>
         <p class="text-secondary">Looking up link...</p>
     </div>
 
+    <!-- Error -->
     <div id="error-state" class="card hidden text-center" style="max-width:28rem;width:100%;">
         <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
         <h2 class="font-bold text-xl mb-2 text-danger">Link Error</h2>
@@ -57,27 +184,132 @@
         <a href="index.html" class="btn btn-primary w-full">Return Home</a>
     </div>
 
-    <div id="countdown-state" class="card hidden text-center" style="max-width:32rem;width:100%;">
-        <h1 style="font-size:clamp(1.2rem,4vw,1.75rem);font-weight:800;margin-bottom:1.25rem;">Your link is almost ready</h1>
+    <!-- ═══════════════════════════════════════════
+         MULTI-PAGE FLOW CARD
+    ════════════════════════════════════════════ -->
+    <div id="flow-card" class="card hidden">
+        <!-- Flow TOP Banner (New) -->
+        <div id="flow-top-banner" class="timer-ad-slot ad-wrapper ad-placeholder" style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:1rem; margin-bottom:1rem; min-height:90px;">Advertisement (Banner)</div>
 
-        <!-- Square Ad inside countdown -->
-        <div class="ad-wrapper" id="square-ad-wrapper">
-            <div class="ad-placeholder ad-square mb-4" id="square-ad-content">Advertisement (300x250)</div>
+        <!-- Progress bar -->
+        <div class="flow-progress-wrap" id="flow-progress-wrap">
+            <div class="flow-steps-label">
+                <span id="step-label">Step 1 of 1</span>
+                <span id="step-pct">0%</span>
+            </div>
+            <div class="flow-progress-track">
+                <div class="flow-progress-bar" id="progress-bar" style="width:0%"></div>
+            </div>
+            <div class="flow-step-dots" id="step-dots"></div>
         </div>
 
-        <div id="timer-box">
-            <p class="text-secondary mb-3" style="font-size:0.95rem;">Please wait for the timer...</p>
-            <div class="timer-circle" id="timer-number">15</div>
-            <button disabled class="btn btn-secondary" style="opacity:0.5;cursor:not-allowed;width:100%;">Getting Link...</button>
+        <!-- Page title -->
+        <h1 class="flow-page-title" id="flow-title">Your link is almost ready</h1>
+
+        <!-- Per-page ad slot (Square) -->
+        <div id="page-ad-slot" class="ad-slot-square ad-placeholder">Advertisement (300x250)</div>
+
+        <!-- Timer -->
+        <div id="timer-section" class="timer-ring-wrap">
+            <!-- Timer TOP Ad -->
+            <div id="timer-top-ad" class="timer-ad-slot ad-wrapper ad-placeholder" style="min-height:90px; margin-bottom:1.5rem;">Advertisement (Banner)</div>
+
+            <div class="timer-ring-container">
+                <svg class="timer-ring-svg" width="110" height="110" id="timer-svg">
+                    <circle class="timer-ring-track" cx="55" cy="55" r="46" stroke-width="7"/>
+                    <circle class="timer-ring-fill" cx="55" cy="55" r="46" stroke-width="7"
+                            id="timer-ring" stroke-dasharray="289" stroke-dashoffset="0"/>
+                </svg>
+                <span class="timer-ring-label" id="timer-number">15</span>
+            </div>
+
+            <!-- Timer BOTTOM Ad -->
+            <div id="timer-bottom-ad" class="timer-ad-slot ad-wrapper ad-placeholder" style="min-height:90px; margin-top:1.5rem;">Advertisement (Banner)</div>
+
+            <p class="timer-hint" id="timer-hint">Please wait...</p>
         </div>
 
+        <!-- Waiting button (disabled) -->
+        <div id="waiting-btn-wrap">
+            <div class="btn-waiting" id="waiting-btn">
+                <span id="waiting-icon">⏳</span>
+                <span id="waiting-text">Please wait...</span>
+            </div>
+        </div>
+
+        <!-- Next page / Final get link button -->
+        <div id="action-btn-wrap" class="hidden">
+            <button id="action-btn" class="btn-next-page" onclick="handleAction()">
+                <span id="action-icon">▶</span>
+                <span id="action-text">Next Page</span>
+            </button>
+        </div>
+
+        <!-- Ready box (last page completed) -->
         <div id="ready-box" class="hidden">
-            <p style="color:var(--success-color);font-weight:700;margin-bottom:1rem;">✅ Ready! Click below to proceed.</p>
+            <div class="ready-icon">✅</div>
+            <p class="ready-text">All done! Your link is ready.</p>
             <a id="final-link" href="#" class="btn btn-primary w-full" style="font-size:1.1rem;padding:1rem;">
                 🔗 Get Link
             </a>
         </div>
+
     </div>
+
+    <!-- AI CONTENT SECTION -->
+    <article class="content-article container">
+        <h1>AI-Generated Content: The Future of Digital Creation</h1>
+        <p>AI-generated content refers to any textual, visual, or audio material created with the assistance of artificial intelligence technologies, often used for media, marketing, or creative purposes.</p>
+
+        <h2>What is AI Content?</h2>
+        <p>AI content is content that is produced, assisted, or fully generated by artificial intelligence systems, such as natural language processing (NLP) models, generative transformers, or machine learning algorithms. It can be in the form of text, images, videos, audio, or even code. AI systems analyze data patterns and generate outputs that mimic human-created content.</p>
+
+        <!-- Square Ad Slot -->
+        <div id="content-square-ad" class="ad-slot-square ad-placeholder">Advertisement (300x250)</div>
+
+        <h2>Types of AI Content</h2>
+        <ul>
+            <li><strong>Text Content:</strong> Articles, blog posts, product descriptions, social media captions, news summaries, and scripts generated by AI writing tools like GPT models.</li>
+            <li><strong>Visual Content:</strong> Images, illustrations, graphics, and even deepfake videos created by AI image generators like DALL·E or MidJourney.</li>
+            <li><strong>Audio Content:</strong> AI-generated music, podcasts, or voiceovers using AI text-to-speech systems.</li>
+            <li><strong>Video Content:</strong> AI-assisted video editing tools can create or enhance videos, generate animation, or automate video production.</li>
+        </ul>
+
+        </ul>
+
+        <!-- Mid Article Banner -->
+        <div id="content-mid-ad" class="ad-placeholder ads-visible" style="min-height:90px; margin: 2rem 0;">Advertisement (728x90)</div>
+
+        <h2>Applications</h2>
+        <ul>
+            <li><strong>Marketing & Advertising:</strong> Generating persuasive copy, social media posts, and email campaigns quickly.</li>
+            <li><strong>Creative Writing & Storytelling:</strong> Crafting stories, poetry, or dialogue with AI assistance.</li>
+            <li><strong>Education & Research:</strong> Summarizing texts, translating content, or generating explanations.</li>
+            <li><strong>Media & News:</strong> Producing news reports, summaries, and automated journalism.</li>
+            <li><strong>Design & Art:</strong> Creating concept art, logos, and illustrations.</li>
+        </ul>
+
+        <h2>Benefits of AI Content</h2>
+        <ul>
+            <li><strong>Efficiency:</strong> Speeds up content creation and reduces manual workload.</li>
+            <li><strong>Scalability:</strong> Allows production of large volumes of content quickly.</li>
+            <li><strong>Creativity Support:</strong> Offers suggestions and drafts that can inspire new ideas.</li>
+            <li><strong>Personalization:</strong> Can generate content tailored to specific audiences based on data analysis.</li>
+        </ul>
+
+        <h2>Challenges and Considerations</h2>
+        <ul>
+            <li><strong>Accuracy and Reliability:</strong> AI may generate content containing factual errors or misleading information.</li>
+            <li><strong>Originality and Plagiarism:</strong> AI content may unintentionally replicate existing material.</li>
+            <li><strong>Ethical Concerns:</strong> Deepfakes and manipulated media raise issues of consent and authenticity.</li>
+            <li><strong>SEO and Regulation:</strong> Overuse of AI-generated text on websites may affect search engine rankings and compliance with AI disclosure norms.</li>
+        </ul>
+
+        <h2>Best Practices</h2>
+        <p>Combine human oversight with AI generation, editing content for accuracy and tone. Clearly disclose when content is AI-generated, especially in journalism or advertising. Evaluate AI tools for quality, bias, and ethical standards before widespread use.</p>
+
+        <p><em>In summary, AI content is a powerful tool that can assist in creating diverse types of digital material efficiently. While it offers creativity and scalability advantages, careful attention to accuracy, originality, and ethical considerations ensures responsible and effective use.</em></p>
+    </article>
 
 </main>
 
@@ -86,7 +318,7 @@
     <div class="ad-placeholder" id="bottom-banner-content">Advertisement</div>
 </div>
 
-<!-- Pop-up / Interstitial Ad Container (invisible) -->
+<!-- Pop-up / Interstitial container (invisible) -->
 <div id="popup-ad-container" style="display:none;"></div>
 
 <footer>
@@ -97,18 +329,26 @@
 </footer>
 
 <script>
-/* ══════════════════════════════════════════
-   AD SETTINGS LOADER
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════
+   SETTINGS & AD CONFIG
+════════════════════════════════════════════════════ */
 const AD_SETTING_KEYS = [
     'ads_enabled', 'ads_countdown',
     'banner_ads_enabled', 'banner_ad_code',
     'square_ads_enabled', 'square_ad_code',
+    'timer_ads_enabled',  'timer_ad_code',
     'popup_ads_enabled',  'popup_ad_code',
-    'header_script_enabled', 'header_script_code'
+    'global_mid_ad_enabled', 'global_mid_ad_code',
+    'global_square_ad_enabled', 'global_square_ad_code',
+    'header_script_enabled', 'header_script_code',
+    'ad_pages_config'
 ];
 
-let adSettings = {};
+let adSettings  = {};
+let adPages     = [];   // Array of { duration, ad_code, label }
+let currentPage = 0;
+let targetUrl   = '';
+let countdownInterval = null;
 
 async function loadAdSettings() {
     try {
@@ -120,106 +360,276 @@ async function loadAdSettings() {
     } catch(e) {
         console.warn('Ad settings unavailable:', e);
     }
-    applyAds();
+
+    // Parse multi-page config
+    try {
+        if (adSettings['ad_pages_config']) {
+            adPages = JSON.parse(adSettings['ad_pages_config']);
+        }
+    } catch(e) { adPages = []; }
+
+    // Fallback: single page using global countdown setting
+    if (!adPages || adPages.length === 0) {
+        adPages = [{
+            duration:  parseInt(adSettings['ads_countdown'] || '15', 10),
+            ad_code:   adSettings['square_ad_code'] || '',
+            label:     'Getting your link'
+        }];
+    }
+
+    applyGlobalAds();
 }
 
+/* ════════════════════════════════════════════════════
+   INJECT HELPERS
+════════════════════════════════════════════════════ */
 function injectCode(containerId, code) {
-    // Create a temporary div, parse HTML, then execute <script> tags
     const container = document.getElementById(containerId);
-    if (!container) return;
+    if (!container || !code) return;
     container.innerHTML = code;
-    // Re-execute any script tags in the injected code
-    container.querySelectorAll('script').forEach(oldScript => {
-        const newScript = document.createElement('script');
-        [...oldScript.attributes].forEach(attr => newScript.setAttribute(attr.name, attr.value));
-        newScript.textContent = oldScript.textContent;
-        oldScript.parentNode.replaceChild(newScript, oldScript);
+    container.classList.add('ad-live');
+    container.querySelectorAll('script').forEach(old => {
+        const n = document.createElement('script');
+        [...old.attributes].forEach(a => n.setAttribute(a.name, a.value));
+        n.textContent = old.textContent;
+        old.parentNode.replaceChild(n, old);
     });
 }
 
 function injectIntoHead(code) {
-    // Parse the raw HTML string and append each element to <head>
-    // so scripts, link tags, and meta tags are properly executed
     const temp = document.createElement('div');
     temp.innerHTML = code;
     [...temp.childNodes].forEach(node => {
-        if (node.nodeType !== 1) return; // element nodes only
+        if (node.nodeType !== 1) return;
         const tag = node.tagName.toLowerCase();
         let el;
         if (tag === 'script') {
             el = document.createElement('script');
-            [...node.attributes].forEach(attr => el.setAttribute(attr.name, attr.value));
+            [...node.attributes].forEach(a => el.setAttribute(a.name, a.value));
             el.textContent = node.textContent;
         } else if (tag === 'link') {
             el = document.createElement('link');
-            [...node.attributes].forEach(attr => el.setAttribute(attr.name, attr.value));
+            [...node.attributes].forEach(a => el.setAttribute(a.name, a.value));
         } else if (tag === 'meta') {
             el = document.createElement('meta');
-            [...node.attributes].forEach(attr => el.setAttribute(attr.name, attr.value));
-        } else {
-            el = node.cloneNode(true);
-        }
+            [...node.attributes].forEach(a => el.setAttribute(a.name, a.value));
+        } else { el = node.cloneNode(true); }
         document.head.appendChild(el);
     });
 }
 
-function applyAds() {
-    const globalEnabled  = adSettings['ads_enabled']       !== 'false';
-    const bannerEnabled  = adSettings['banner_ads_enabled'] !== 'false';
-    const squareEnabled  = adSettings['square_ads_enabled'] !== 'false';
-    const popupEnabled   = adSettings['popup_ads_enabled']  === 'true';
-    const bannerCode     = adSettings['banner_ad_code']  || '';
-    const squareCode     = adSettings['square_ad_code']  || '';
-    const popupCode      = adSettings['popup_ad_code']   || '';
+/* ════════════════════════════════════════════════════
+   GLOBAL ADS (banners, popup, head script)
+════════════════════════════════════════════════════ */
+function applyGlobalAds() {
+    const globalEnabled = adSettings['ads_enabled'] !== 'false';
+    if (!globalEnabled) return;
 
-    if (!globalEnabled) return; // All ads disabled
-
-    // ── Banner Ads ──
-    if (bannerEnabled) {
-        ['top-banner-ad', 'bottom-banner-ad'].forEach(id => {
-            const wrapper = document.getElementById(id);
-            if (wrapper) wrapper.classList.add('ads-visible');
-        });
-        if (bannerCode.trim()) {
-            injectCode('top-banner-content', bannerCode);
-            injectCode('bottom-banner-content', bannerCode);
+    // Banner ads (Full page top/bottom)
+    if (adSettings['banner_ads_enabled'] !== 'false') {
+        const bc = adSettings['banner_ad_code'] || '';
+        if (bc.trim()) {
+            injectCode('top-banner-content',    bc);
+            injectCode('bottom-banner-content', bc);
+            injectCode('flow-top-banner',       bc);
         }
     }
 
-    // ── Square Ad ──
-    if (squareEnabled) {
-        const wrapper = document.getElementById('square-ad-wrapper');
-        if (wrapper) wrapper.classList.add('ads-visible');
-        if (squareCode.trim()) {
-            injectCode('square-ad-content', squareCode);
+    // Timer area banners
+    if (adSettings['timer_ads_enabled'] !== 'false') {
+        const tc = adSettings['timer_ad_code'] || '';
+        if (tc.trim()) {
+            ['timer-top-ad', 'timer-bottom-ad', 'flow-top-banner'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('ads-visible');
+            });
+            injectCode('timer-top-ad',    tc);
+            injectCode('timer-bottom-ad', tc);
         }
     }
 
-    // ── Pop-up / Interstitial ──
-    if (popupEnabled && popupCode.trim()) {
-        const popup = document.getElementById('popup-ad-container');
-        if (popup) injectCode('popup-ad-container', popupCode);
+    // Mid Article Content Banner
+    if (adSettings['global_mid_ad_enabled'] !== 'false') {
+        const mc = adSettings['global_mid_ad_code'] || '';
+        if (mc.trim()) injectCode('content-mid-ad', mc);
     }
 
-    // ── Header Script (inject into <head>) ──
-    const headerEnabled = adSettings['header_script_enabled'] === 'true';
-    const headerCode    = adSettings['header_script_code'] || '';
-    if (headerEnabled && headerCode.trim()) {
-        injectIntoHead(headerCode);
+    // Mid Article Square Ad
+    if (adSettings['global_square_ad_enabled'] !== 'false') {
+        const sc = adSettings['global_square_ad_code'] || '';
+        if (sc.trim()) injectCode('content-square-ad', sc);
+    }
+
+    // Popup
+    if (adSettings['popup_ads_enabled'] === 'true') {
+        const pc = adSettings['popup_ad_code'] || '';
+        if (pc.trim()) injectCode('popup-ad-container', pc);
+    }
+
+    // Header script
+    if (adSettings['header_script_enabled'] === 'true') {
+        const hc = adSettings['header_script_code'] || '';
+        if (hc.trim()) injectIntoHead(hc);
     }
 }
 
-/* ══════════════════════════════════════════
-   REDIRECT LOGIC
-══════════════════════════════════════════ */
+/* ════════════════════════════════════════════════════
+   MULTI-PAGE FLOW ENGINE
+════════════════════════════════════════════════════ */
+function buildDots() {
+    const dots = document.getElementById('step-dots');
+    dots.innerHTML = '';
+    adPages.forEach((_, i) => {
+        const d = document.createElement('div');
+        d.className = 'flow-dot';
+        d.id = 'dot-' + i;
+        dots.appendChild(d);
+    });
+}
+
+function updateProgress(pageIndex) {
+    const total  = adPages.length;
+    const done   = pageIndex;          // pages completed (0-based current)
+    const pct    = Math.round((done / total) * 100);
+
+    document.getElementById('step-label').textContent = `Step ${pageIndex + 1} of ${total}`;
+    document.getElementById('step-pct').textContent   = pct + '%';
+    document.getElementById('progress-bar').style.width = pct + '%';
+
+    // Dots
+    adPages.forEach((_, i) => {
+        const d = document.getElementById('dot-' + i);
+        if (!d) return;
+        d.className = 'flow-dot' + (i < pageIndex ? ' done' : i === pageIndex ? ' active' : '');
+    });
+
+    // Hide progress wrap if only 1 page
+    if (total === 1) {
+        document.getElementById('flow-progress-wrap').style.display = 'none';
+    }
+}
+
+function showFlowCard() {
+    document.getElementById('loading-state').classList.add('hidden');
+    const card = document.getElementById('flow-card');
+    card.classList.remove('hidden');
+}
+
+function startFlow(url) {
+    targetUrl = url;
+    showFlowCard();
+    buildDots();
+    showPage(0);
+}
+
+function showPage(pageIndex) {
+    currentPage = pageIndex;
+    const page  = adPages[pageIndex];
+    const isLast = pageIndex === adPages.length - 1;
+
+    // Reset UI for this page
+    document.getElementById('action-btn-wrap').classList.add('hidden');
+    document.getElementById('waiting-btn-wrap').classList.remove('hidden');
+    document.getElementById('ready-box').classList.add('hidden');
+    document.getElementById('page-ad-slot').innerHTML = '';
+
+    // Animate card re-entry on page change
+    const card = document.getElementById('flow-card');
+    card.style.animation = 'none';
+    void card.offsetWidth;
+    card.style.animation = 'fadeSlideIn 0.35s ease';
+
+    // Title
+    const label = page.label || `Step ${pageIndex + 1}`;
+    document.getElementById('flow-title').textContent =
+        isLast ? '🔗 Almost there!' : `📄 ${label}`;
+
+    // Per-page ad code
+    if (page.ad_code && page.ad_code.trim()) {
+        injectCode('page-ad-slot', page.ad_code);
+    }
+
+    // Progress
+    updateProgress(pageIndex);
+
+    // Timer setup
+    const duration = Math.max(parseInt(page.duration, 10) || 15, 1);
+    const circumference = 2 * Math.PI * 46; // r=46 → ~289
+    const ring = document.getElementById('timer-ring');
+    ring.style.strokeDasharray  = circumference;
+    ring.style.strokeDashoffset = 0;
+
+    let timeLeft = duration;
+    document.getElementById('timer-number').textContent = timeLeft;
+    document.getElementById('timer-hint').textContent   =
+        isLast ? 'Almost done...' : 'Next page coming up...';
+
+    // Waiting button text
+    document.getElementById('waiting-icon').textContent = '⏳';
+    document.getElementById('waiting-text').textContent =
+        isLast ? 'Preparing your link...' : 'Please wait...';
+
+    if (countdownInterval) clearInterval(countdownInterval);
+
+    countdownInterval = setInterval(() => {
+        timeLeft -= 1;
+        document.getElementById('timer-number').textContent = Math.max(timeLeft, 0);
+
+        // Animate ring
+        const offset = circumference * (1 - timeLeft / duration);
+        ring.style.strokeDashoffset = circumference - offset;
+
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+            onPageComplete(pageIndex, isLast);
+        }
+    }, 1000);
+}
+
+function onPageComplete(pageIndex, isLast) {
+    // Mark dot done
+    const d = document.getElementById('dot-' + pageIndex);
+    if (d) { d.classList.remove('active'); d.classList.add('done'); }
+
+    // Update progress to 100% on last
+    if (isLast) {
+        document.getElementById('progress-bar').style.width = '100%';
+        document.getElementById('step-pct').textContent = '100%';
+    }
+
+    document.getElementById('waiting-btn-wrap').classList.add('hidden');
+    document.getElementById('timer-section').classList.add('hidden');
+
+    if (isLast) {
+        // Show final "Get Link" button
+        document.getElementById('ready-box').classList.remove('hidden');
+        document.getElementById('final-link').href = targetUrl;
+        document.getElementById('flow-title').textContent = '✅ Your link is ready!';
+    } else {
+        // Show "Next Page" button
+        const ab = document.getElementById('action-btn-wrap');
+        ab.classList.remove('hidden');
+        document.getElementById('action-icon').textContent = '▶';
+        document.getElementById('action-text').textContent =
+            `Continue to Page ${pageIndex + 2} →`;
+    }
+}
+
+function handleAction() {
+    // Advance to next page
+    document.getElementById('timer-section').classList.remove('hidden');
+    showPage(currentPage + 1);
+}
+
+/* ════════════════════════════════════════════════════
+   MAIN: REDIRECT LOGIC
+════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
-    // Load ads in parallel with link lookup
+    // Fire ad settings load immediately
     const adPromise = loadAdSettings();
 
-    const urlParams  = new URLSearchParams(window.location.search);
-    const shortCode  = urlParams.get('id');
-
-    if (!shortCode) { showError("Invalid or missing short code."); return; }
+    const shortCode = new URLSearchParams(window.location.search).get('id');
+    if (!shortCode) { showError('Invalid or missing short code.'); return; }
 
     try {
         const { data, error } = await window.supabaseClient
@@ -231,16 +641,39 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (error || !data) throw new Error('Link not found or invalid.');
         if (data.status === 'banned') throw new Error('This link has been banned.');
 
-        // Record click async
+        // Record click (fire & forget)
         window.supabaseClient.from('clicks').insert([{
             link_id:  data.id,
             referrer: document.referrer || 'direct',
             device:   /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
         }]).then(() => {});
 
-        // Wait for ad settings before starting countdown (so ads show from tick 1)
+        // Wait for ad config before starting flow
         await adPromise;
-        startCountdown(data.original_url);
+        applyGlobalAds();
+
+        // ── Per-link overrides ────────────────────────
+        const linkTimer = parseInt(data.custom_timer, 10);
+        const linkPages = parseInt(data.custom_pages, 10);
+
+        // If link has custom page count, regenerate adPages array
+        if (!isNaN(linkPages) && linkPages > 0) {
+            const newPages = [];
+            for (let i = 0; i < linkPages; i++) {
+                newPages.push({
+                    duration: !isNaN(linkTimer) && linkTimer > 0 ? linkTimer : (adPages[0]?.duration || 15),
+                    ad_code:  adPages[0]?.ad_code || '',
+                    label:    i === linkPages - 1 ? 'Getting your link' : 'Next page coming up...'
+                });
+            }
+            adPages = newPages;
+        } 
+        // Else if just custom timer is set, update durations of existing pages
+        else if (!isNaN(linkTimer) && linkTimer > 0) {
+            adPages.forEach(p => p.duration = linkTimer);
+        }
+
+        startFlow(data.original_url);
 
     } catch (err) {
         showError(err.message);
@@ -252,31 +685,6 @@ function showError(msg) {
     document.getElementById('error-state').classList.remove('hidden');
     document.getElementById('error-msg-text').innerText = msg;
 }
-
-function startCountdown(targetUrl) {
-    document.getElementById('loading-state').classList.add('hidden');
-    document.getElementById('countdown-state').classList.remove('hidden');
-
-    // Use the admin-configured countdown, default 15s
-    let timeLeft = parseInt(adSettings['ads_countdown'] || '15', 10);
-    if (isNaN(timeLeft) || timeLeft < 1) timeLeft = 15;
-
-    const timerNumber = document.getElementById('timer-number');
-    timerNumber.innerText = timeLeft;
-
-    const interval = setInterval(() => {
-        timeLeft -= 1;
-        timerNumber.innerText = timeLeft;
-        if (timeLeft <= 0) {
-            clearInterval(interval);
-            document.getElementById('timer-box').classList.add('hidden');
-            const readyBox = document.getElementById('ready-box');
-            readyBox.classList.remove('hidden');
-            document.getElementById('final-link').href = targetUrl;
-        }
-    }, 1000);
-}
 </script>
-
 </body>
 </html>

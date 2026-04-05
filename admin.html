@@ -100,6 +100,63 @@
             outline: none; transition: border-color 0.2s; box-sizing: border-box;
         }
         .setting-field input:focus { border-color: var(--primary-color); }
+
+        /* ── Multi-Page Flow Config ── */
+        .pages-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1rem; }
+        .page-config-card {
+            background: var(--bg-color); border: 1.5px solid var(--border-color);
+            border-radius: 0.75rem; padding: 1.25rem;
+            transition: border-color 0.2s;
+        }
+        .page-config-card:hover { border-color: var(--primary-color); }
+        .page-config-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .page-num-badge {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-weight: 700; font-size: 0.88rem; color: var(--primary-color);
+            background: rgba(59,130,246,0.1); padding: 0.28rem 0.7rem;
+            border-radius: 999px;
+        }
+        .page-remove-btn {
+            background: none; border: 1.5px solid var(--border-color);
+            border-radius: 0.5rem; color: var(--danger-color);
+            padding: 0.28rem 0.65rem; font-size: 0.78rem; cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .page-remove-btn:hover { background: rgba(239,68,68,0.08); border-color: var(--danger-color); }
+        .page-row-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+        @media (max-width: 500px) { .page-row-2col { grid-template-columns: 1fr; } }
+        .page-field label { font-size: 0.82rem; font-weight: 600; display: block; margin-bottom: 0.35rem; color: var(--secondary-color); }
+        .page-field input {
+            width: 100%; padding: 0.6rem 0.8rem;
+            background: var(--card-bg); border: 1.5px solid var(--border-color);
+            border-radius: 0.6rem; color: var(--text-color); font-size: 0.9rem;
+            outline: none; transition: border-color 0.2s; box-sizing: border-box;
+        }
+        .page-field input:focus { border-color: var(--primary-color); }
+        .add-page-btn {
+            width: 100%; padding: 0.8rem;
+            border: 2px dashed var(--border-color);
+            background: transparent; border-radius: 0.75rem;
+            color: var(--secondary-color); cursor: pointer;
+            font-size: 0.9rem; font-weight: 600;
+            transition: all 0.2s; margin-bottom: 1.25rem;
+        }
+        .add-page-btn:hover { border-color: var(--primary-color); color: var(--primary-color); background: rgba(59,130,246,0.05); }
+        .pages-flow-preview {
+            display: flex; align-items: center; gap: 0.35rem;
+            flex-wrap: wrap; margin-bottom: 1.25rem;
+            padding: 0.75rem 1rem; background: var(--bg-color);
+            border-radius: 0.75rem; border: 1px solid var(--border-color);
+            font-size: 0.8rem; color: var(--secondary-color);
+        }
+        .flow-page-chip {
+            background: var(--primary-color); color: #fff;
+            padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+        }
+        .flow-arrow { color: var(--secondary-color); font-size: 0.85rem; }
     </style>
 </head>
 <body class="flex flex-col">
@@ -201,9 +258,166 @@
             <div id="view-ads" class="admin-view hidden">
                 <h2 class="font-bold mb-4" style="font-size:1.1rem;">📢 Ad Placement Control</h2>
 
-                <!-- Master Toggle -->
+                <!-- ══════════════════════════════════════
+                     SECTION A: GLOBAL PAGES (index + dashboard)
+                ══════════════════════════════════════ -->
+                <div class="ads-section" style="border:1.5px solid var(--border-color);border-radius:1rem;padding:1.25rem;margin-bottom:2rem;background:var(--bg-color);">
+                    <h3 style="color:var(--primary-color);">🌍 All Pages — Global Ad Slots</h3>
+                    <p class="ad-code-note" style="margin-bottom:1rem;">These ads appear on <strong>every page</strong> (Home, Dashboard) via the shared ad loader. Each slot has its own code &amp; toggle.</p>
+
+                    <!-- Global master -->
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">🔛 Enable Global Ads (All Pages)</div>
+                            <div class="ads-toggle-sub">Master switch — disabling this hides all global ads on every page.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-ads-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <!-- Global header script -->
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">🧩 Global Header Script</div>
+                            <div class="ads-toggle-sub">Injected into &lt;head&gt; on every page (Monetag global, AdSense init, etc.)</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-header-enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="global-header-code">🖊 Global Header Script Code</label>
+                    <textarea class="ad-code-textarea" id="global-header-code" style="min-height:90px;"
+                        placeholder="e.g. Monetag / AdSense global script tag..."></textarea>
+                    <p class="ad-code-note">💡 This fires on index.html, dashboard.html, and redirect.html.</p>
+
+                    <!-- Top Banner -->
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">📰 Top Banner Ad</div>
+                            <div class="ads-toggle-sub">Displayed at the top of every page (leaderboard 728×90 or responsive).</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-top-banner-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="global-top-banner-code">🖊 Top Banner Ad Code</label>
+                    <textarea class="ad-code-textarea" id="global-top-banner-code"
+                        placeholder="Paste your top banner script here..."></textarea>
+                    <p class="ad-code-note">Injected into .ad-slot-top on all pages.</p>
+
+                    <!-- Mid Ad -->
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">🪧 Mid-Article / Content Banner</div>
+                            <div class="ads-toggle-sub">Displayed inside the AI Content article on the redirect page.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-mid-ad-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="global-mid-ad-code">🖊 Mid Article Banner Code</label>
+                    <textarea class="ad-code-textarea" id="global-mid-ad-code"
+                        placeholder="Paste your 728x90 horizontal banner script here..."></textarea>
+                    <p class="ad-code-note">Injected into .ad-slot-mid on the redirect page content.</p>
+
+                    <!-- Sidebar Ad -->
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">🗂️ Sidebar Ad (300×250)</div>
+                            <div class="ads-toggle-sub">Displayed in the dashboard sidebar panel.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-sidebar-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="global-sidebar-code">🖊 Sidebar Ad Code</label>
+                    <textarea class="ad-code-textarea" id="global-sidebar-ad-code"
+                        placeholder="Paste your square or vertical ad script here..."></textarea>
+                    <p class="ad-code-note">Injected into .ad-slot-sidebar on all pages (usually 300×250 or 300×600).</p>
+
+                    <!-- Global Square Ad -->
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">🔲 Global Square Ad</div>
+                            <div class="ads-toggle-sub">A 300×250 square ad that appears on Home, Dashboard, and AI Content pages.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-square-ad-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="global-square-ad-code">🖊 Global Square Ad Code</label>
+                    <textarea class="ad-code-textarea" id="global-square-ad-code"
+                        placeholder="Paste your 300×250 square ad script here..."></textarea>
+                    <p class="ad-code-note">Injected into .ad-slot-square on all pages.</p>
+
+                    <!-- Bottom Banner -->
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">📰 Bottom Banner Ad</div>
+                            <div class="ads-toggle-sub">Displayed at the bottom of every page above the footer.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-bottom-banner-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="global-bottom-banner-code">🖊 Bottom Banner Ad Code</label>
+                    <textarea class="ad-code-textarea" id="global-bottom-banner-code"
+                        placeholder="Paste your bottom banner script here..."></textarea>
+                    <p class="ad-code-note">Injected into .ad-slot-bottom on all pages.</p>
+
+                    <!-- Global Popup -->
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">💥 Global Pop-up / Push Ad</div>
+                            <div class="ads-toggle-sub">Fires on all pages when they load (Monetag push, pop-under, etc.)</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-popup-enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="global-popup-code">🖊 Global Pop-up Script</label>
+                    <textarea class="ad-code-textarea" id="global-popup-code"
+                        placeholder="Paste your pop-up or push notification script here..."></textarea>
+                    <p class="ad-code-note">⚠️ This script is injected into &lt;head&gt; on every page.</p>
+                </div>
+
+                <!-- Sticky Bottom Banner -->
                 <div class="ads-section">
-                    <h3>🌐 Global Ad Settings</h3>
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">📌 Sticky Bottom Banner</div>
+                            <div class="ads-toggle-sub">Stays anchored to the bottom of the screen on all pages.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="global-sticky-banner-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="global-sticky-banner-code">🖊 Sticky Banner Code</label>
+                    <textarea class="ad-code-textarea" id="global-sticky-banner-code"
+                        placeholder="Paste your 728x90 or responsive banner script here..."></textarea>
+                    <p class="ad-code-note">💡 This creates a persistent banner at the bottom of the viewport.</p>
+                </div>
+
+                <!-- ══════════════════════════════════════
+                     SECTION B: REDIRECT PAGE (existing)
+                ══════════════════════════════════════ -->
+                <div class="ads-section" style="border:1.5px solid var(--border-color);border-radius:1rem;padding:1.25rem;background:var(--bg-color);">
+                    <h3 style="color:var(--primary-color);">🔗 Redirect Page — Ad Slots</h3>
+                    <p class="ad-code-note" style="margin-bottom:1rem;">These ads appear on the <strong>redirect/countdown page</strong> only.</p>
+
+                <!-- Master Toggle (redirect) -->
+                <div class="ads-section">
+                    <h3>🌐 Redirect Page Ad Settings</h3>
                     <div class="ads-toggle-row">
                         <div>
                             <div class="ads-toggle-label">Enable Ads on Redirect Page</div>
@@ -267,6 +481,26 @@
                     <p class="ad-code-note">💡 This code will be injected inside the countdown box on the redirect page.</p>
                 </div>
 
+                <!-- Timer Area Ads -->
+                <div class="ads-section">
+                    <h3>⏲️ Timer Area Banner Ad (Top & Bottom of Ring)</h3>
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">Show Timer Ads</div>
+                            <div class="ads-toggle-sub">Displayed immediately above and below the circular timer ring.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="timer-ads-toggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="ad-slot-preview">Timer Slot → Banner surrounding the countdown circle</div>
+                    <label class="ad-code-label" for="timer-ad-code">🖊 Timer Ad Code (HTML / Script)</label>
+                    <textarea class="ad-code-textarea" id="timer-ad-code"
+                        placeholder="Paste your ad script here..."></textarea>
+                    <p class="ad-code-note">💡 This code will be injected above and below the timer circle on the redirect page.</p>
+                </div>
+
                 <!-- Interstitial / Popup Ad -->
                 <div class="ads-section">
                     <h3>💥 Pop-up / Interstitial Ad</h3>
@@ -304,6 +538,31 @@
                     <textarea class="ad-code-textarea" id="header-script-code" style="min-height:130px;"
                         placeholder="Paste your header ad network script here...&#10;e.g. &lt;script src='https://...'&gt;&lt;/script&gt;&#10;Works with Monetag, Google AdSense, PropellerAds, etc."></textarea>
                     <p class="ad-code-note">💡 The script will be appended to &lt;head&gt; on the redirect page every time a visitor opens a shortened link.</p>
+                </div>
+
+                <!-- ═══ MULTI-PAGE FLOW ═══ -->
+                <div class="ads-section">
+                    <h3>📊 Multi-Page Ad Flow</h3>
+                    <p class="ad-code-note" style="margin-bottom:1rem;">
+                        Configure how many ad pages visitors see before getting the link.
+                        Each page has its own timer &amp; ad code.
+                        <strong>Changes auto-apply to all links.</strong>
+                    </p>
+
+                    <!-- Live flow diagram -->
+                    <div class="pages-flow-preview" id="flow-preview">
+                        <span class="flow-page-chip">📄 Page 1 (15s)</span>
+                        <span class="flow-arrow">→</span>
+                        <span style="color:var(--success-color);font-weight:700">🔗 Link</span>
+                    </div>
+
+                    <!-- Dynamic page list -->
+                    <div class="pages-list" id="pages-list"></div>
+
+                    <!-- Add page button -->
+                    <button class="add-page-btn" onclick="addPage()">+ Add Another Page</button>
+
+                    <p class="ad-code-note">ℹ️ After the last page timer ends, visitors see the "Get Link" button. Max recommended: 5 pages.</p>
                 </div>
 
                 <!-- Save Button -->
@@ -386,15 +645,159 @@ async function fetchGlobalData() {
 }
 
 /* ════════════════════════════════════════════════
+   AD SETTINGS — Defaults (auto-seeded to DB)
+════════════════════════════════════════════════ */
+const MND_HEADER = `<script async src="https://ss.mrmnd.com/banner.js"><\/script>
+<script async src="https://ss.mrmnd.com/interstitial.js" data-mndintid="2b85e1ed-b9f7-47e0-a3a2-2bb8de405809"><\/script>
+<script async src="https://ss.mrmnd.com/native.js"><\/script>
+<script async src="https://ss.mrmnd.com/static/7384f9cf-5c3b-4538-8617-ada8d46969fd.js"><\/script>`;
+
+const MND_BANNER   = `<div data-mndbanid="48c0404c-5b20-4fd3-b7b0-ccf04fbc3d35"></div>`;
+const MND_SQUARE   = `<div data-mndbanid="07de441d-0694-4c70-a957-df18293d41ae"></div>`;
+const MND_POPUP    = `<div data-mndazid="0f33f2f7-a422-4fa6-83b3-75b0bd4753c8"></div>`;
+
+const DEFAULT_AD_SETTINGS = {
+    // ── Global (all pages) ──
+    global_ads_enabled:            'true',
+    global_header_script_enabled:  'true',
+    global_header_script:          MND_HEADER,
+    global_top_banner_enabled:     'true',
+    global_top_banner_code:        MND_BANNER,
+    global_mid_ad_enabled:         'true',
+    global_mid_ad_code:            MND_BANNER,
+    global_sidebar_ad_enabled:     'true',
+    global_sidebar_ad_code:        MND_SQUARE,
+    global_square_ad_enabled:      'true',
+    global_square_ad_code:         MND_SQUARE,
+    global_bottom_banner_enabled:  'true',
+    global_bottom_banner_code:     MND_BANNER,
+    global_popup_enabled:          'false',
+    global_popup_code:             MND_POPUP,
+    global_sticky_banner_enabled:  'true',
+    global_sticky_banner_code:     MND_BANNER,
+    // ── Redirect page ──
+    ad_pages_config:               JSON.stringify([{ duration: 15, label: '', ad_code: MND_SQUARE }]),
+    ads_enabled:                   'true',
+    ads_countdown:                 '15',
+    ads_cpc:                       '2.00',
+    banner_ads_enabled:            'true',
+    banner_ad_code:                MND_BANNER,
+    square_ads_enabled:            'true',
+    square_ad_code:                MND_SQUARE,
+    timer_ads_enabled:             'true',
+    timer_ad_code:                 MND_BANNER,
+    popup_ads_enabled:             'true',
+    popup_ad_code:                 MND_POPUP,
+    header_script_enabled:         'true',
+    header_script_code:            MND_HEADER,
+};
+
+/**
+ * Auto-seeds any missing ad settings to Supabase on first load.
+ * Never overwrites values that are already in the DB.
+ */
+async function seedDefaultSettings(existingMap) {
+    const toSeed = [];
+    Object.entries(DEFAULT_AD_SETTINGS).forEach(([key, value]) => {
+        if (existingMap[key] === undefined || existingMap[key] === null || existingMap[key] === '') {
+            toSeed.push({ key, value });
+        }
+    });
+    if (toSeed.length > 0) {
+        await window.supabaseClient
+            .from('settings')
+            .upsert(toSeed, { onConflict: 'key' });
+        console.log(`[SnipAd] Auto-seeded ${toSeed.length} default ad settings to DB.`);
+    }
+}
+
+/* ════════════════════════════════════════════════
    AD SETTINGS — Load & Save
 ════════════════════════════════════════════════ */
 const AD_KEYS = [
+    // Redirect page ads
     'ads_enabled', 'ads_countdown', 'ads_cpc',
     'banner_ads_enabled', 'banner_ad_code',
     'square_ads_enabled', 'square_ad_code',
+    'timer_ads_enabled',  'timer_ad_code',
     'popup_ads_enabled',  'popup_ad_code',
-    'header_script_enabled', 'header_script_code'
+    'header_script_enabled', 'header_script_code',
+    'ad_pages_config',
+    // Global all-pages ads
+    'global_ads_enabled',
+    'global_header_script_enabled', 'global_header_script',
+    'global_top_banner_enabled',    'global_top_banner_code',
+    'global_bottom_banner_enabled', 'global_bottom_banner_code',
+    'global_sidebar_ad_enabled',    'global_sidebar_ad_code',
+    'global_square_ad_enabled',     'global_square_ad_code',
+    'global_mid_ad_enabled',        'global_mid_ad_code',
+    'global_popup_enabled',         'global_popup_code'
 ];
+
+/* ════════════════════════════════
+   MULTI-PAGE STATE & UI
+════════════════════════════════ */
+let adminPages = [];
+
+function renderPageList() {
+    const list = document.getElementById('pages-list');
+    list.innerHTML = '';
+    adminPages.forEach((page, i) => {
+        const card = document.createElement('div');
+        card.className = 'page-config-card';
+        card.innerHTML = `
+            <div class="page-config-header">
+                <span class="page-num-badge">📄 Page ${i + 1}</span>
+                ${adminPages.length > 1 ? `<button class="page-remove-btn" onclick="removePage(${i})">✕ Remove</button>` : ''}
+            </div>
+            <div class="page-row-2col">
+                <div class="page-field">
+                    <label>⏱ Wait Time (seconds)</label>
+                    <input type="number" min="3" max="120" value="${page.duration || 15}"
+                        oninput="adminPages[${i}].duration = parseInt(this.value)||15; updateFlowPreview();">
+                </div>
+                <div class="page-field">
+                    <label>🏷️ Page Label (optional)</label>
+                    <input type="text" value="${page.label || ''}"
+                        placeholder="e.g. Getting your link..."
+                        oninput="adminPages[${i}].label = this.value;">
+                </div>
+            </div>
+            <label class="ad-code-label">🖊 Ad Code for Page ${i + 1}</label>
+            <textarea class="ad-code-textarea" style="min-height:85px;"
+                placeholder="Paste ad script/HTML for this specific page...&#10;Leave empty to show no ad on this page."
+                oninput="adminPages[${i}].ad_code = this.value;">${page.ad_code || ''}</textarea>
+            <p class="ad-code-note">💡 Each page runs its own countdown then advances to the next automatically.</p>
+        `;
+        list.appendChild(card);
+    });
+    updateFlowPreview();
+}
+
+function updateFlowPreview() {
+    const preview = document.getElementById('flow-preview');
+    if (!preview) return;
+    let html = '';
+    adminPages.forEach((p, i) => {
+        const dur = p.duration || 15;
+        html += `<span class="flow-page-chip">📄 Page ${i+1} (${dur}s)</span>`;
+        html += `<span class="flow-arrow">→</span>`;
+    });
+    html += `<span style="color:var(--success-color);font-weight:700">🔗 Link</span>`;
+    preview.innerHTML = html;
+}
+
+function addPage() {
+    if (adminPages.length >= 5) { alert('Maximum 5 pages allowed.'); return; }
+    adminPages.push({ duration: 15, label: '', ad_code: '' });
+    renderPageList();
+}
+
+function removePage(i) {
+    if (adminPages.length <= 1) return;
+    adminPages.splice(i, 1);
+    renderPageList();
+}
 
 async function loadAdSettings() {
     const { data, error } = await window.supabaseClient
@@ -407,19 +810,56 @@ async function loadAdSettings() {
     const map = {};
     (data || []).forEach(row => map[row.key] = row.value);
 
-    // Apply to UI
-    setToggle('ads-enabled-toggle',   map['ads_enabled']       !== 'false');
-    setToggle('banner-ads-enabled',   map['banner_ads_enabled'] !== 'false');
-    setToggle('square-ads-enabled',   map['square_ads_enabled'] !== 'false');
-    setToggle('popup-ads-enabled',      map['popup_ads_enabled']       === 'true');
-    setToggle('header-script-enabled',  map['header_script_enabled']   === 'true');
+    // Auto-seed any missing settings with defaults (fires once, never overwrites)
+    await seedDefaultSettings(map);
 
-    if (map['ads_countdown'])      document.getElementById('ads-countdown').value      = map['ads_countdown'];
-    if (map['ads_cpc'])            document.getElementById('ads-cpc').value            = map['ads_cpc'];
-    if (map['banner_ad_code'])     document.getElementById('banner-ad-code').value     = map['banner_ad_code'];
-    if (map['square_ad_code'])     document.getElementById('square-ad-code').value     = map['square_ad_code'];
-    if (map['popup_ad_code'])      document.getElementById('popup-ad-code').value      = map['popup_ad_code'];
-    if (map['header_script_code']) document.getElementById('header-script-code').value = map['header_script_code'];
+    // Merge defaults into map for UI rendering (DB wins, default as fallback)
+    Object.entries(DEFAULT_AD_SETTINGS).forEach(([key, val]) => {
+        if (!map[key]) map[key] = val;
+    });
+
+    // Toggles
+    setToggle('ads-enabled-toggle',    map['ads_enabled']           !== 'false');
+    setToggle('banner-ads-enabled',    map['banner_ads_enabled']    !== 'false');
+    setToggle('square-ads-enabled',    map['square_ads_enabled']    !== 'false');
+    setToggle('timer-ads-toggle',      map['timer_ads_enabled']     !== 'false');
+    setToggle('popup-ads-enabled',     map['popup_ads_enabled']     === 'true');
+    setToggle('header-script-enabled', map['header_script_enabled'] === 'true');
+
+    // Text fields (redirect page)
+    document.getElementById('ads-countdown').value       = map['ads_countdown']      || '15';
+    document.getElementById('ads-cpc').value             = map['ads_cpc']            || '2.00';
+    document.getElementById('banner-ad-code').value      = map['banner_ad_code']     || '';
+    document.getElementById('square-ad-code').value      = map['square_ad_code']     || '';
+    document.getElementById('timer-ad-code').value       = map['timer_ad_code']      || '';
+    document.getElementById('popup-ad-code').value       = map['popup_ad_code']      || '';
+    document.getElementById('header-script-code').value  = map['header_script_code'] || '';
+
+    // Global pages toggles
+    setToggle('global-ads-enabled',           map['global_ads_enabled']           === 'true');
+    setToggle('global-header-enabled',        map['global_header_script_enabled'] === 'true');
+    setToggle('global-top-banner-enabled',    map['global_top_banner_enabled']    === 'true');
+    setToggle('global-mid-ad-enabled',        map['global_mid_ad_enabled']        === 'true');
+    setToggle('global-sidebar-enabled',       map['global_sidebar_ad_enabled']    === 'true');
+    setToggle('global-square-ad-enabled',     map['global_square_ad_enabled']     === 'true');
+    setToggle('global-bottom-banner-enabled', map['global_bottom_banner_enabled'] === 'true');
+    setToggle('global-popup-enabled',         map['global_popup_enabled']         === 'true');
+
+    // Global pages text fields
+    document.getElementById('global-header-code').value         = map['global_header_script']      || '';
+    document.getElementById('global-top-banner-code').value     = map['global_top_banner_code']    || '';
+    document.getElementById('global-mid-ad-code').value         = map['global_mid_ad_code']        || '';
+    document.getElementById('global-sidebar-ad-code').value     = map['global_sidebar_ad_code']    || '';
+    document.getElementById('global-square-ad-code').value      = map['global_square_ad_code']     || '';
+    document.getElementById('global-bottom-banner-code').value  = map['global_bottom_banner_code'] || '';
+    document.getElementById('global-popup-code').value          = map['global_popup_code']         || '';
+
+    // Multi-page config
+    try {
+        adminPages = map['ad_pages_config'] ? JSON.parse(map['ad_pages_config']) : [];
+    } catch(e) { adminPages = []; }
+    if (!adminPages.length) adminPages = [{ duration: 15, label: '', ad_code: MND_SQUARE }];
+    renderPageList();
 }
 
 function setToggle(id, val) {
@@ -443,10 +883,29 @@ async function saveAdSettings() {
         { key: 'banner_ad_code',        value: document.getElementById('banner-ad-code').value },
         { key: 'square_ads_enabled',    value: String(document.getElementById('square-ads-enabled').checked) },
         { key: 'square_ad_code',        value: document.getElementById('square-ad-code').value },
+        { key: 'timer_ads_enabled',     value: String(document.getElementById('timer-ads-toggle').checked) },
+        { key: 'timer_ad_code',         value: document.getElementById('timer-ad-code').value },
         { key: 'popup_ads_enabled',     value: String(document.getElementById('popup-ads-enabled').checked) },
         { key: 'popup_ad_code',         value: document.getElementById('popup-ad-code').value },
         { key: 'header_script_enabled', value: String(document.getElementById('header-script-enabled').checked) },
         { key: 'header_script_code',    value: document.getElementById('header-script-code').value },
+        { key: 'ad_pages_config',             value: JSON.stringify(adminPages) },
+        // Global pages
+        { key: 'global_ads_enabled',          value: String(document.getElementById('global-ads-enabled').checked) },
+        { key: 'global_header_script_enabled',value: String(document.getElementById('global-header-enabled').checked) },
+        { key: 'global_header_script',        value: document.getElementById('global-header-code').value },
+        { key: 'global_top_banner_enabled',   value: String(document.getElementById('global-top-banner-enabled').checked) },
+        { key: 'global_top_banner_code',      value: document.getElementById('global-top-banner-code').value },
+        { key: 'global_mid_ad_enabled',       value: String(document.getElementById('global-mid-ad-enabled').checked) },
+        { key: 'global_mid_ad_code',          value: document.getElementById('global-mid-ad-code').value },
+        { key: 'global_sidebar_ad_enabled',   value: String(document.getElementById('global-sidebar-enabled').checked) },
+        { key: 'global_sidebar_ad_code',      value: document.getElementById('global-sidebar-ad-code').value },
+        { key: 'global_square_ad_enabled',    value: String(document.getElementById('global-square-ad-enabled').checked) },
+        { key: 'global_square_ad_code',       value: document.getElementById('global-square-ad-code').value },
+        { key: 'global_bottom_banner_enabled',value: String(document.getElementById('global-bottom-banner-enabled').checked) },
+        { key: 'global_bottom_banner_code',   value: document.getElementById('global-bottom-banner-code').value },
+        { key: 'global_popup_enabled',        value: String(document.getElementById('global-popup-enabled').checked) },
+        { key: 'global_popup_code',           value: document.getElementById('global-popup-code').value },
     ];
 
     const { error } = await window.supabaseClient
@@ -498,7 +957,10 @@ function renderLinks() {
             <td class="truncate text-secondary" style="max-width:140px;" title="${l.original_url}">${l.original_url}</td>
             <td>${l.clicks || 0}</td>
             <td><span class="badge ${l.status === 'banned' ? 'badge-danger' : 'badge-success'}">${l.status}</span></td>
-            <td><button onclick="toggleBan('${l.id}','${l.status}')" class="btn btn-secondary" style="padding:0.35rem 0.75rem;font-size:0.8rem;">${l.status === 'active' ? 'Ban' : 'Unban'}</button></td>
+            <td style="display:flex;gap:0.4rem;">
+                <button onclick="toggleBan('${l.id}','${l.status}')" class="btn btn-secondary" style="padding:0.35rem 0.75rem;font-size:0.8rem;">${l.status === 'active' ? 'Ban' : 'Unban'}</button>
+                <button onclick="openSettings('${l.id}', ${l.custom_timer || '""'}, '${l.custom_pages || ""}')" class="btn btn-secondary" style="padding:0.35rem 0.75rem;font-size:0.8rem;">⚙️</button>
+            </td>
         </tr>`;
     });
 }
@@ -546,7 +1008,75 @@ async function updatePayout(id, newStatus) {
     await window.supabaseClient.from('payouts').update({ status: newStatus }).eq('id', id);
     await fetchGlobalData();
 }
+
+/* ════════════════════════════════
+   PER-LINK SETTINGS (Admin Override)
+   ════════════════════════════════ */
+function openSettings(id, timer, pages) {
+    document.getElementById('link-id').value = id;
+    document.getElementById('custom-timer').value = timer;
+    document.getElementById('custom-pages').value = pages;
+    document.getElementById('settings-modal').classList.remove('hidden');
+}
+
+function closeModal() {
+    document.getElementById('settings-modal').classList.add('hidden');
+}
+
+async function saveLinkSettings(e) {
+    e.preventDefault();
+    const id = document.getElementById('link-id').value;
+    const timer = document.getElementById('custom-timer').value || null;
+    const pages = document.getElementById('custom-pages').value || null;
+    
+    try {
+        const { error } = await window.supabaseClient
+            .from('links')
+            .update({ custom_timer: timer, custom_pages: pages })
+            .eq('id', id);
+        if (error) throw error;
+        alert('Link updated!');
+        closeModal();
+        await fetchGlobalData();
+    } catch(err) { alert(err.message); }
+}
 </script>
+
+<!-- Link Settings Modal -->
+<div id="settings-modal" class="modal-overlay hidden">
+    <div class="card" style="max-width:30rem;width:100%;margin:2rem;position:relative;background:var(--card-bg);">
+        <button onclick="closeModal()" style="position:absolute;top:1rem;right:1rem;background:none;border:none;font-size:1.5rem;cursor:pointer;color:var(--secondary-color);">&times;</button>
+        <h2 class="font-bold mb-4" style="color:var(--text-color);">⚙️ Override Link Flow</h2>
+        <form onsubmit="saveLinkSettings(event)" class="flex-col gap-4">
+            <input type="hidden" id="link-id">
+            <div>
+                <label class="text-sm font-medium" style="display:block;margin-bottom:0.4rem;">⏱ Custom Timer (seconds)</label>
+                <input id="custom-timer" type="number" class="input" placeholder="Global default" min="5" max="120">
+            </div>
+            <div>
+                <label class="text-sm font-medium" style="display:block;margin-bottom:0.4rem;">📄 Custom Ad Pages</label>
+                <select id="custom-pages" class="input">
+                    <option value="">Use Global Default</option>
+                    <option value="1">1 Page</option>
+                    <option value="2">2 Pages</option>
+                    <option value="3">3 Pages</option>
+                    <option value="4">4 Pages</option>
+                    <option value="5">5 Pages</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary w-full">Save Override</button>
+        </form>
+    </div>
+</div>
+
+<style>
+.modal-overlay {
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.6); z-index: 2000;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+}
+</style>
 
 </body>
 </html>
