@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting... - SnipAd</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/supabase.js"></script>
+</head>
+<body>
+
+<!-- Top Ad Banner Placeholder -->
+<div class="ad-placeholder" style="max-width: 1200px; margin: 1rem auto;">
+    Banner Ad Placement (728x90) / Interstitial Start
+</div>
+
+<main class="flex-1 container flex flex-col items-center justify-center py-8">
+    <div id="loading-state" class="text-center">
+        <h2 class="text-xl text-secondary mb-4">Looking up link...</h2>
+    </div>
+
+    <div id="error-state" class="card max-w-lg w-full text-center border-danger-color hidden">
+        <h2 class="text-2xl font-bold text-danger mb-4">Oops!</h2>
+        <p id="error-msg-text" class="text-secondary mb-6"></p>
+        <a href="index.html" class="btn btn-primary">Return Home</a>
+    </div>
+
+    <div id="countdown-state" class="card max-w-lg w-full text-center flex flex-col items-center hidden">
+        <h1 class="text-3xl font-bold mb-6">Your link is almost ready</h1>
+        
+        <!-- Ad Square -->
+        <div class="w-full ad-placeholder ad-square mb-6">
+            Ad Square Placement (300x250)
+        </div>
+
+        <div id="timer-box" class="mb-6">
+            <p class="text-lg text-secondary mb-2">Please wait...</p>
+            <div id="timer-number" class="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4" style="border-radius: 50%;">
+                5
+            </div>
+            <button disabled class="btn btn-secondary cursor-not-allowed opacity-50 px-8">
+                Getting Link...
+            </button>
+        </div>
+
+        <div id="ready-box" class="mb-6 hidden">
+            <p class="text-lg text-success mb-4 font-medium">Ready!</p>
+            <a id="final-link" href="#" class="btn btn-primary px-8 py-3 text-lg" style="animation: pulse 2s infinite;">
+                Get Link
+            </a>
+        </div>
+    </div>
+</main>
+
+<!-- Bottom Banner Ad -->
+<div class="ad-placeholder" style="max-width: 1200px; margin: 1rem auto;">
+    Bottom Banner Ad Placement
+</div>
+
+<style>
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const shortCode = urlParams.get('id');
+    
+    if (!shortCode) {
+        showError("Invalid or missing short code.");
+        return;
+    }
+
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('links')
+            .select('*')
+            .eq('short_code', shortCode)
+            .single();
+
+        if (error || !data) throw new Error('Link not found or invalid.');
+        if (data.status === 'banned') throw new Error('This link has been banned.');
+
+        // Record a click asynchronously
+        window.supabaseClient.from('clicks').insert([{
+            link_id: data.id,
+            referrer: document.referrer || 'direct',
+            device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
+        }]).then(() => {});
+
+        startCountdown(data.original_url);
+
+    } catch (err) {
+        showError(err.message);
+    }
+});
+
+function showError(msg) {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('error-state').classList.remove('hidden');
+    document.getElementById('error-msg-text').innerText = msg;
+}
+
+function startCountdown(targetUrl) {
+    document.getElementById('loading-state').classList.add('hidden');
+    document.getElementById('countdown-state').classList.remove('hidden');
+
+    let timeLeft = 5;
+    const timerNumber = document.getElementById('timer-number');
+    
+    const interval = setInterval(() => {
+        timeLeft -= 1;
+        timerNumber.innerText = timeLeft;
+        if (timeLeft <= 0) {
+            clearInterval(interval);
+            document.getElementById('timer-box').classList.add('hidden');
+            document.getElementById('ready-box').classList.remove('hidden');
+            const finalLink = document.getElementById('final-link');
+            finalLink.href = targetUrl;
+            
+            // Auto-redirect mechanism (optional, keeping it manual for user interaction with ads)
+            // window.location.href = targetUrl; 
+        }
+    }, 1000);
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - SnipAd</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/supabase.js"></script>
+    <script src="assets/main.js"></script>
+</head>
+<body class="flex flex-col">
+
+<header>
+    <div class="container py-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <a href="index.html" class="font-bold text-xl text-primary">SnipAd</a>
+            <span class="badge badge-danger">ADMIN</span>
+        </div>
+        <nav class="flex items-center gap-6">
+            <a href="dashboard.html" class="btn btn-secondary">Exit Admin</a>
+            <button id="theme-toggle" class="btn btn-secondary text-sm">Dark Mode</button>
+        </nav>
+    </div>
+</header>
+
+<main class="flex-1 container py-8 max-w-6xl">
+    <div id="loading" class="text-center py-10">Verifying Admin Privileges...</div>
+
+    <div id="admin-content" class="flex flex-col md:flex-row gap-8 hidden">
+        <!-- Sidebar Navigation -->
+        <div class="w-full md:w-64 flex flex-col gap-2">
+            <button onclick="switchTab('users')" id="tab-users" class="p-4 text-left font-medium rounded-lg transition-colors bg-primary text-white">Manage Users</button>
+            <button onclick="switchTab('links')" id="tab-links" class="p-4 text-left font-medium rounded-lg transition-colors bg-card hover:bg-bg-color">Moderate Links</button>
+            <button onclick="switchTab('payouts')" id="tab-payouts" class="p-4 text-left font-medium rounded-lg transition-colors bg-card hover:bg-bg-color">Payout Requests</button>
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 card overflow-x-auto min-h-[500px]">
+            
+            <!-- Users Tab -->
+            <div id="view-users" class="admin-view">
+                <h2 class="text-xl font-bold mb-6">Registered Users</h2>
+                <table class="w-full text-sm">
+                    <thead><tr><th>Email</th><th>Role</th><th>Total Earnings</th></tr></thead>
+                    <tbody id="admin-users-list"></tbody>
+                </table>
+            </div>
+
+            <!-- Links Tab -->
+            <div id="view-links" class="admin-view hidden">
+                <h2 class="text-xl font-bold mb-6">All Links</h2>
+                <table class="w-full text-sm">
+                    <thead><tr><th>Code</th><th>Original URL</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="admin-links-list"></tbody>
+                </table>
+            </div>
+
+            <!-- Payouts Tab -->
+            <div id="view-payouts" class="admin-view hidden">
+                <h2 class="text-xl font-bold mb-6">Payout Requests</h2>
+                <table class="w-full text-sm">
+                    <thead><tr><th>User ID</th><th>Amount</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead>
+                    <tbody id="admin-payouts-list"></tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+</main>
+
+<script>
+let usersData = [];
+let linksData = [];
+let payoutsData = [];
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // No auth required
+    try {
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('admin-content').classList.remove('hidden');
+        document.getElementById('admin-content').style.display = 'flex'; // override class logic for flex row
+
+        await fetchGlobalData();
+    } catch(err) {
+        document.getElementById('loading').innerText = "An error occurred fetching data.";
+    }
+});
+
+async function fetchGlobalData() {
+    // Bring all data
+    const resUsers = await window.supabaseClient.from('profiles').select('*');
+    usersData = resUsers.data || [];
+    renderUsers();
+
+    const resLinks = await window.supabaseClient.from('links').select('*');
+    linksData = resLinks.data || [];
+    renderLinks();
+
+    const resPayouts = await window.supabaseClient.from('payouts').select('*');
+    payoutsData = resPayouts.data || [];
+    renderPayouts();
+}
+
+function renderUsers() {
+    const tbody = document.getElementById('admin-users-list');
+    tbody.innerHTML = '';
+    usersData.forEach(u => {
+        tbody.innerHTML += `
+            <tr class="border-b border-color">
+                <td class="font-medium text-primary">${u.email || u.id}</td>
+                <td><span class="badge ${u.role==='admin' ? 'badge-danger' : 'badge-success'}">${u.role}</span></td>
+                <td class="font-bold">$${u.total_earnings || '0.00'}</td>
+            </tr>
+        `;
+    });
+}
+
+function renderLinks() {
+    const tbody = document.getElementById('admin-links-list');
+    tbody.innerHTML = '';
+    linksData.forEach(l => {
+        tbody.innerHTML += `
+            <tr class="border-b border-color">
+                <td class="font-medium">${l.short_code}</td>
+                <td class="truncate" style="max-width:200px" title="${l.original_url}">${l.original_url}</td>
+                <td><span class="badge ${l.status==='banned' ? 'badge-danger' : 'badge-success'}">${l.status}</span></td>
+                <td>
+                    <button onclick="toggleBan('${l.id}', '${l.status}')" class="btn btn-secondary py-1 px-3 text-xs">
+                        ${l.status==='active' ? 'Ban' : 'Unban'}
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function renderPayouts() {
+    const tbody = document.getElementById('admin-payouts-list');
+    tbody.innerHTML = '';
+    payoutsData.forEach(p => {
+        tbody.innerHTML += `
+            <tr class="border-b border-color">
+                <td class="truncate" style="max-width:150px" title="${p.user_id}">${p.user_id}</td>
+                <td class="font-bold text-success-color">$${p.amount}</td>
+                <td class="uppercase">${p.method}</td>
+                <td><span class="badge ${p.status==='pending' ? 'badge-danger' : 'badge-success'}">${p.status}</span></td>
+                <td>
+                    ${p.status === 'pending' ? `
+                      <button onclick="updatePayout('${p.id}', 'approved')" class="btn btn-secondary py-1 px-3 text-xs text-success">Approve</button>
+                      <button onclick="updatePayout('${p.id}', 'rejected')" class="btn btn-secondary py-1 px-3 text-xs text-danger">Reject</button>
+                    ` : 'None'}
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function switchTab(tabName) {
+    document.querySelectorAll('.admin-view').forEach(el => el.classList.add('hidden'));
+    document.getElementById('view-' + tabName).classList.remove('hidden');
+
+    document.querySelectorAll('[id^="tab-"]').forEach(el => {
+        el.className = 'p-4 text-left font-medium rounded-lg transition-colors bg-card hover:bg-bg-color';
+    });
+    document.getElementById('tab-' + tabName).className = 'p-4 text-left font-medium rounded-lg transition-colors bg-primary text-white';
+}
+
+async function toggleBan(linkId, currentStatus) {
+    const newStatus = currentStatus === 'active' ? 'banned' : 'active';
+    await window.supabaseClient.from('links').update({ status: newStatus }).eq('id', linkId);
+    fetchGlobalData(); // reload
+}
+
+async function updatePayout(id, newStatus) {
+    await window.supabaseClient.from('payouts').update({ status: newStatus }).eq('id', id);
+    fetchGlobalData(); // reload
+}
+</script>
+
+</body>
+</html>

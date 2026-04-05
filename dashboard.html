@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SnipAd</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Use Chart.js directly via CDN for charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="assets/supabase.js"></script>
+    <script src="assets/main.js"></script>
+</head>
+<body class="flex flex-col">
+
+<header>
+    <div class="container py-4 flex items-center justify-between">
+        <a href="index.html" class="font-bold text-xl text-primary">SnipAd</a>
+        <nav class="flex items-center gap-6">
+            <button id="theme-toggle" class="btn btn-secondary text-sm">Dark Mode</button>
+            <div id="auth-links" class="flex items-center"></div>
+        </nav>
+    </div>
+</header>
+
+<main class="flex-1 container py-8 flex flex-col md:flex-row gap-6">
+    <div id="loading" class="w-full text-center py-10">Loading Dashboard...</div>
+    
+    <div id="dashboard-content" class="w-full flex-col md:flex-row gap-6 hidden">
+        <!-- Sidebar -->
+        <div class="w-full md:w-64 flex flex-col gap-4">
+            <div class="card text-center">
+                <div id="user-initial" class="w-16 h-16 bg-primary rounded-full text-white flex items-center justify-center text-xl font-bold mx-auto mb-4 tracking-tighter" style="border-radius: 50%;">?</div>
+                <p id="user-email" class="font-semibold text-lg overflow-hidden text-ellipsis">-</p>
+                <div class="mt-2 text-sm">
+                    <span class="badge badge-success">Publisher</span>
+                    <a id="admin-btn" href="admin.html" class="mt-4 btn btn-secondary w-full text-sm py-2 hidden">Go to Admin Panel</a>
+                </div>
+            </div>
+
+            <div class="ad-placeholder h-64 mb-4">Sidebar Ad (300x250)</div>
+        </div>
+
+        <!-- Main Stats -->
+        <div class="flex-1 flex flex-col gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card flex items-center gap-4 border-l-4" style="border-left-color: #3b82f6;">
+                    <div>
+                        <p class="text-secondary text-sm font-medium">Total Clicks</p>
+                        <h3 id="stat-clicks" class="text-2xl font-bold">0</h3>
+                    </div>
+                </div>
+                <div class="card flex items-center gap-4 border-l-4" style="border-left-color: #22c55e;">
+                    <div>
+                        <p class="text-secondary text-sm font-medium">Total Earnings</p>
+                        <h3 id="stat-earnings" class="text-2xl font-bold">$0.0000</h3>
+                    </div>
+                </div>
+                <div class="card flex items-center gap-4 border-l-4" style="border-left-color: #8b5cf6;">
+                    <div>
+                        <p class="text-secondary text-sm font-medium">Avg CPM</p>
+                        <h3 class="text-2xl font-bold">$5.00</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts & Payouts -->
+            <div class="card">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold">Performance Overview</h2>
+                    <button id="payout-toggle" class="btn btn-primary">Request Payout</button>
+                </div>
+
+                <div id="payout-form" class="mb-6 p-4 border border-color rounded-lg bg-bg-color hidden transition-all">
+                    <h3 class="font-bold mb-4">Request Withdrawal</h3>
+                    <form id="submit-payout" class="flex flex-col md:flex-row gap-4 items-end">
+                        <div class="flex-1">
+                            <label class="text-sm font-medium block mb-1">Method</label>
+                            <select id="withdraw-method" class="input">
+                                <option value="paypal">PayPal</option>
+                                <option value="upi">UPI</option>
+                                <option value="bank">Bank Transfer</option>
+                            </select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-sm font-medium block mb-1">Details</label>
+                            <input id="withdraw-details" type="text" required class="input" placeholder="Enter details">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                    <p class="text-xs text-secondary mt-2">Minimum threshold $5.00.</p>
+                </div>
+
+                <div style="height: 300px; width: 100%;">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Links Table -->
+            <div class="card overflow-x-auto">
+                <h2 class="text-xl font-bold mb-4">Your Links</h2>
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr>
+                            <th>Short Link</th>
+                            <th>Original URL</th>
+                            <th>Clicks</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="links-table-body">
+                        <!-- Filled by JS -->
+                    </tbody>
+                </table>
+                <div id="no-links-msg" class="text-center py-8 text-secondary hidden">
+                    <p>You haven't shortened any links yet.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+    // Completely Free Access
+    const user = { email: 'Public Dashboard', id: 'public-mode' };
+    document.getElementById('user-email').innerText = user.email;
+    document.getElementById('user-initial').innerText = 'P';
+
+    try {
+        document.getElementById('admin-btn').classList.remove('hidden'); // Always show admin panel too since it's "set free"
+
+        // Fetch All Links indiscriminately for the public dashboard
+        const { data: links } = await window.supabaseClient.from('links').select('*').order('created_at', { ascending: false });
+
+        let totalClicks = 0;
+        const tbody = document.getElementById('links-table-body');
+        
+        if (links && links.length > 0) {
+            links.forEach(link => {
+                totalClicks += (link.clicks || 0);
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="font-medium text-primary"><a href="${window.location.origin}/redirect.html?id=${link.short_code}" target="_blank">${link.short_code}</a></td>
+                    <td class="truncate" style="max-width:200px" title="${link.original_url}">${link.original_url}</td>
+                    <td class="font-bold">${link.clicks || 0}</td>
+                    <td><span class="badge ${link.status === 'banned' ? 'badge-danger' : 'badge-success'}">${link.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } else {
+            document.getElementById('no-links-msg').classList.remove('hidden');
+        }
+
+        const cpm = 5;
+        const calcEarnings = (totalClicks / 1000) * cpm;
+        const finalEarnings = calcEarnings;
+
+        document.getElementById('stat-clicks').innerText = totalClicks;
+        document.getElementById('stat-earnings').innerText = '$' + finalEarnings.toFixed(4);
+
+        // Submitting Layout
+        document.getElementById('loading').classList.add('hidden');
+        const dashContainer = document.getElementById('dashboard-content');
+        dashContainer.classList.remove('hidden');
+        dashContainer.classList.add('flex'); // Add flex to make it layout properly
+
+        // Chart Init
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Simulated Clicks',
+                    data: [12, 19, 3, 5, 2, 3, 15],
+                    borderColor: '#3b82f6',
+                    tension: 0.4
+                }]
+            },
+            options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        // Payout Form Logic
+        document.getElementById('payout-toggle').addEventListener('click', () => {
+            document.getElementById('payout-form').classList.toggle('hidden');
+        });
+
+        document.getElementById('submit-payout').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (finalEarnings < 5) return alert("Minimum payout is $5.00");
+            
+            const method = document.getElementById('withdraw-method').value;
+            const details = document.getElementById('withdraw-details').value;
+
+            const { error } = await window.supabaseClient.from('payouts').insert([{
+                user_id: user.id,
+                amount: finalEarnings,
+                method: method,
+                payment_details: details,
+                status: 'pending'
+            }]);
+
+            if (error) alert("Error: " + error.message);
+            else {
+                alert("Payout requested successfully.");
+                document.getElementById('payout-form').classList.add('hidden');
+            }
+        });
+
+    } catch (err) {
+        document.getElementById('loading').innerText = "An error occurred fetching dashboard data.";
+        console.error(err);
+    }
+});
+</script>
+
+</body>
+</html>

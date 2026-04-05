@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnipAd - Monetized URL Shortener</title>
+    <link rel="stylesheet" href="assets/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="assets/supabase.js"></script>
+    <script src="assets/main.js"></script>
+</head>
+<body>
+
+<header>
+    <div class="container py-4 flex items-center justify-between">
+        <a href="index.html" class="flex items-center gap-2 font-bold text-xl text-primary">
+            SnipAd
+        </a>
+        <nav class="flex items-center gap-6">
+            <button id="theme-toggle" class="btn btn-secondary text-sm">Dark Mode</button>
+            <div id="auth-links" class="flex items-center">
+                <!-- Injected via JS -->
+            </div>
+        </nav>
+    </div>
+</header>
+
+<main class="flex-1 flex flex-col">
+    <!-- Top Ad Banner Placeholder -->
+    <div class="container">
+        <div class="ad-placeholder">
+            Banner Ad Placement (728x90)
+        </div>
+    </div>
+
+    <section class="hero-gradient py-16 flex-1 flex flex-col items-center justify-center text-center px-4">
+        <div class="w-full" style="max-width: 48rem; margin: 0 auto">
+            <h1 class="text-4xl font-bold mb-4">Shorten URLs, <span class="text-primary">Earn Money</span>.</h1>
+            <p class="text-xl text-secondary mb-8">The premium URL shortener network that pays you for your traffic. Highest CPM rates.</p>
+
+            <div class="card text-left">
+                <form id="shorten-form" class="flex flex-col gap-4">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <input type="url" id="url-input" class="input flex-1" placeholder="Paste your long URL here... https://" required>
+                        <button type="submit" id="shorten-btn" class="btn btn-primary whitespace-nowrap">Shorten URL</button>
+                    </div>
+                </form>
+
+                <div id="error-msg" class="mt-4 p-4 badge badge-danger hidden"></div>
+
+                <div id="result-box" class="mt-6 p-4 border border-color bg-bg-color rounded-lg hidden flex items-center justify-between">
+                    <div>
+                        <p class="text-sm text-success mb-1">Your shortened URL is ready:</p>
+                        <a id="short-url" href="" target="_blank" class="text-xl font-bold text-primary"></a>
+                    </div>
+                    <button id="copy-btn" class="btn btn-secondary">Copy</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bottom Ad Banner Placeholder -->
+    <div class="container">
+        <div class="ad-placeholder my-8">
+            Mid-Page Banner Ad Placement (970x250)
+        </div>
+    </div>
+</main>
+
+<footer>
+    <div class="container py-8 flex justify-between items-center text-secondary text-sm">
+        <div>&copy; 2026 SnipAd. All rights reserved.</div>
+    </div>
+</footer>
+
+<script>
+document.getElementById('shorten-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const url = document.getElementById('url-input').value;
+    const btn = document.getElementById('shorten-btn');
+    const resultBox = document.getElementById('result-box');
+    const shortUrlEl = document.getElementById('short-url');
+    const errorMsg = document.getElementById('error-msg');
+    
+    btn.innerText = 'Shortening...';
+    btn.disabled = true;
+    errorMsg.classList.add('hidden');
+    resultBox.classList.add('hidden');
+
+    try {
+        const userId = null; // Free public access
+        const code = generateShortCode();
+
+        const { data, error } = await window.supabaseClient
+            .from('links')
+            .insert([{ original_url: url, short_code: code, user_id: userId }]);
+
+        if (error) throw error;
+
+        const fullShortUrl = `${window.location.origin}/redirect.html?id=${code}`;
+        shortUrlEl.href = fullShortUrl;
+        shortUrlEl.innerText = fullShortUrl;
+        resultBox.classList.remove('hidden');
+        document.getElementById('url-input').value = '';
+
+    } catch (err) {
+        errorMsg.innerText = err.message || 'Error occurred';
+        errorMsg.classList.remove('hidden');
+    } finally {
+        btn.innerText = 'Shorten URL';
+        btn.disabled = false;
+    }
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+    navigator.clipboard.writeText(document.getElementById('short-url').href);
+    document.getElementById('copy-btn').innerText = 'Copied!';
+    setTimeout(() => { document.getElementById('copy-btn').innerText = 'Copy'; }, 2000);
+});
+</script>
+
+</body>
+</html>
