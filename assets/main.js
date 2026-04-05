@@ -1,63 +1,54 @@
 // Global Utilities
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. Handle Dark Mode Logic
+
+  // 1. Dark Mode
   const themeToggle = document.getElementById('theme-toggle');
-  
+  const themeToggleMobile = document.getElementById('theme-toggle-mobile');
+
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     document.body.classList.add('dark');
+    if (themeToggle) themeToggle.innerText = 'Light Mode';
+    if (themeToggleMobile) themeToggleMobile.innerText = 'Light Mode';
   }
 
-  if (themeToggle) {
-    themeToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark');
-      themeToggle.innerText = document.body.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
+  function toggleTheme() {
+    document.body.classList.toggle('dark');
+    const label = document.body.classList.contains('dark') ? 'Light Mode' : 'Dark Mode';
+    if (themeToggle) themeToggle.innerText = label;
+    if (themeToggleMobile) themeToggleMobile.innerText = label;
+  }
+
+  if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+  if (themeToggleMobile) themeToggleMobile.addEventListener('click', toggleTheme);
+
+  // 2. Hamburger Menu Toggle
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobile-menu');
+
+  if (hamburger && mobileMenu) {
+    hamburger.addEventListener('click', () => {
+      hamburger.classList.toggle('open');
+      mobileMenu.classList.toggle('open');
+    });
+    // Close menu when a link inside it is clicked
+    mobileMenu.querySelectorAll('a, button').forEach(el => {
+      el.addEventListener('click', () => {
+        hamburger.classList.remove('open');
+        mobileMenu.classList.remove('open');
+      });
     });
   }
 
-  // 2. Setup standard navigation UI (Auth Removed)
+  // 3. Navigation links - always open (no auth)
   const authLinks = document.getElementById('auth-links');
   if (authLinks) {
     authLinks.innerHTML = `
-      <a href="dashboard.html" class="text-secondary" style="margin-right:1rem">Dashboard</a>
-      <a href="admin.html" class="btn btn-primary">Admin Panel</a>
+      <a href="dashboard.html" class="btn btn-secondary" style="font-size:0.9rem;padding:0.6rem 1rem;">Dashboard</a>
+      <a href="admin.html" class="btn btn-primary" style="font-size:0.9rem;padding:0.6rem 1rem;">Admin Panel</a>
     `;
   }
-
-  // 3. Load dynamic ads
-  loadDynamicAds().catch(err => console.error("Ads failed load", err));
 });
 
-async function loadDynamicAds() {
-  if (!window.supabaseClient) return;
-  const { data } = await window.supabaseClient.from('settings').select('*');
-  if (data) {
-      data.forEach(setting => {
-          const key = setting.key;
-          const val = setting.value;
-          if (!val || val.trim() === '') return;
-
-          if (key === 'head_script') {
-              const range = document.createRange();
-              range.selectNode(document.head);
-              const frag = range.createContextualFragment(val);
-              document.head.appendChild(frag);
-          }
-          if (key === 'banner_top') {
-              const el = document.getElementById('ad-zone-top');
-              if (el) el.innerHTML = val;
-          }
-          if (key === 'banner_bottom') {
-              const el = document.getElementById('ad-zone-bottom');
-              if (el) el.innerHTML = val;
-          }
-          if (key === 'ad_square') {
-              const el = document.getElementById('ad-zone-square');
-              if (el) el.innerHTML = val;
-          }
-      });
-  }
-}
-
 function generateShortCode() {
-  return Math.random().toString(36).substr(2, 6);
+  return Math.random().toString(36).substr(2, 7);
 }
