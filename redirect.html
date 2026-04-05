@@ -37,7 +37,7 @@
         <div id="timer-box" class="mb-6">
             <p class="text-lg text-secondary mb-2">Please wait...</p>
             <div id="timer-number" class="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4" style="border-radius: 50%;">
-                5
+                15
             </div>
             <button disabled class="btn btn-secondary cursor-not-allowed opacity-50 px-8">
                 Getting Link...
@@ -106,7 +106,7 @@ function startCountdown(targetUrl) {
     document.getElementById('loading-state').classList.add('hidden');
     document.getElementById('countdown-state').classList.remove('hidden');
 
-    let timeLeft = 5;
+    let timeLeft = 15;
     const timerNumber = document.getElementById('timer-number');
     
     const interval = setInterval(() => {
