@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="monetag" content="92ab5bb619933c015584074abda33ac0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel - SnipAd</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,8 +11,115 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/supabase.js"></script>
     <script src="assets/main.js"></script>
+    <style>
+        /* ── Password Gate ── */
+        #password-gate {
+            position: fixed; inset: 0;
+            background: var(--bg-color);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999; padding: 1.5rem;
+        }
+        #password-gate .gate-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            padding: 2.5rem 2rem;
+            max-width: 420px; width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        #password-gate .gate-icon {
+            font-size: 3.5rem; margin-bottom: 1rem;
+            animation: pulse-lock 2s ease-in-out infinite;
+        }
+        @keyframes pulse-lock {
+            0%,100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        #password-gate h2 {
+            font-size: 1.5rem; font-weight: 800; margin-bottom: 0.4rem;
+        }
+        #password-gate p { color: var(--secondary-color); margin-bottom: 1.5rem; font-size: 0.95rem; }
+        #gate-input {
+            width: 100%; padding: 0.85rem 1rem;
+            background: var(--input-bg, var(--bg-color));
+            border: 1.5px solid var(--border-color);
+            border-radius: 0.75rem; color: var(--text-color);
+            font-size: 1.1rem; text-align: center;
+            letter-spacing: 0.3em; outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 0.75rem;
+        }
+        #gate-input:focus { border-color: var(--primary-color); }
+        #gate-input.error { border-color: var(--danger-color); animation: shake 0.35s; }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-8px); }
+            75% { transform: translateX(8px); }
+        }
+        #gate-error { color: var(--danger-color); font-size: 0.85rem; margin-bottom: 0.75rem; min-height: 1.2em; }
+
+        /* ── Ads Tab ── */
+        .ads-section { margin-bottom: 2rem; }
+        .ads-section h3 { font-size: 1rem; font-weight: 700; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; }
+        .ads-toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.25rem; padding: 1rem 1.25rem; background: var(--bg-color); border-radius: 0.75rem; border: 1px solid var(--border-color); }
+        .ads-toggle-label { font-weight: 600; font-size: 0.95rem; }
+        .ads-toggle-sub { font-size: 0.8rem; color: var(--secondary-color); margin-top: 0.15rem; }
+        /* Toggle switch */
+        .toggle-switch { position: relative; width: 52px; height: 28px; flex-shrink: 0; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; inset: 0; background: var(--border-color); border-radius: 999px; cursor: pointer; transition: background 0.25s; }
+        .toggle-slider::before { content: ''; position: absolute; width: 20px; height: 20px; left: 4px; top: 4px; background: #fff; border-radius: 50%; transition: transform 0.25s; }
+        .toggle-switch input:checked + .toggle-slider { background: var(--primary-color); }
+        .toggle-switch input:checked + .toggle-slider::before { transform: translateX(24px); }
+
+        .ad-code-label { font-size: 0.88rem; font-weight: 600; margin-bottom: 0.5rem; display: block; }
+        .ad-code-textarea {
+            width: 100%; min-height: 110px; padding: 0.85rem 1rem;
+            background: var(--bg-color); border: 1.5px solid var(--border-color);
+            border-radius: 0.75rem; color: var(--text-color);
+            font-family: 'Courier New', monospace; font-size: 0.83rem;
+            resize: vertical; outline: none; transition: border-color 0.2s;
+            box-sizing: border-box;
+        }
+        .ad-code-textarea:focus { border-color: var(--primary-color); }
+        .ad-code-note { font-size: 0.8rem; color: var(--secondary-color); margin-top: 0.4rem; margin-bottom: 1rem; }
+        .ads-save-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+        #ads-save-status { font-size: 0.88rem; font-weight: 600; }
+        #ads-save-status.success { color: var(--success-color); }
+        #ads-save-status.error { color: var(--danger-color); }
+
+        .ad-slot-preview { background: var(--bg-color); border: 1.5px dashed var(--border-color); border-radius: 0.75rem; padding: 0.75rem 1rem; font-size: 0.8rem; color: var(--secondary-color); text-align: center; margin-bottom: 1.5rem; }
+        .countdown-setting-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; }
+        @media (max-width: 480px) { .countdown-setting-row { grid-template-columns: 1fr; } }
+        .setting-field label { font-size: 0.88rem; font-weight: 600; display: block; margin-bottom: 0.4rem; }
+        .setting-field input {
+            width: 100%; padding: 0.7rem 0.9rem;
+            background: var(--bg-color); border: 1.5px solid var(--border-color);
+            border-radius: 0.75rem; color: var(--text-color); font-size: 0.95rem;
+            outline: none; transition: border-color 0.2s; box-sizing: border-box;
+        }
+        .setting-field input:focus { border-color: var(--primary-color); }
+    </style>
 </head>
 <body class="flex flex-col">
+
+<!-- ════════════════════════════════════════════════
+     PASSWORD GATE
+════════════════════════════════════════════════ -->
+<div id="password-gate">
+    <div class="gate-card">
+        <div class="gate-icon">🔐</div>
+        <h2>Admin Access</h2>
+        <p>Enter the admin password to continue.</p>
+        <input type="password" id="gate-input" placeholder="••••••" maxlength="20"
+               onkeydown="if(event.key==='Enter') checkPassword()">
+        <div id="gate-error"></div>
+        <button class="btn btn-primary w-full" onclick="checkPassword()" style="padding:0.85rem;">
+            Unlock Panel →
+        </button>
+    </div>
+</div>
 
 <header>
     <div class="navbar-inner">
@@ -44,11 +152,12 @@
     <div id="loading" style="text-align:center;padding:3rem;color:var(--secondary-color);">Loading admin data...</div>
 
     <div id="admin-content" class="hidden" style="display:none;">
-        <!-- Tabs - horizontal scroll on mobile -->
+        <!-- Tabs -->
         <div class="admin-tabs mb-4">
             <button onclick="switchTab('users')" id="tab-users" class="tab-btn active">👥 Users</button>
             <button onclick="switchTab('links')" id="tab-links" class="tab-btn">🔗 Links</button>
             <button onclick="switchTab('payouts')" id="tab-payouts" class="tab-btn">💰 Payouts</button>
+            <button onclick="switchTab('ads')" id="tab-ads" class="tab-btn">📢 Ads</button>
         </div>
 
         <!-- Content -->
@@ -88,6 +197,125 @@
                 <div id="no-payouts-msg" class="text-center py-8 text-secondary hidden">No payout requests found.</div>
             </div>
 
+            <!-- ══ ADS TAB ══ -->
+            <div id="view-ads" class="admin-view hidden">
+                <h2 class="font-bold mb-4" style="font-size:1.1rem;">📢 Ad Placement Control</h2>
+
+                <!-- Master Toggle -->
+                <div class="ads-section">
+                    <h3>🌐 Global Ad Settings</h3>
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">Enable Ads on Redirect Page</div>
+                            <div class="ads-toggle-sub">When disabled, all ad slots on the redirect page are hidden.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ads-enabled-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+
+                    <div class="countdown-setting-row">
+                        <div class="setting-field">
+                            <label for="ads-countdown">⏱ Countdown Timer (seconds)</label>
+                            <input type="number" id="ads-countdown" min="5" max="60" value="15" placeholder="e.g. 15">
+                        </div>
+                        <div class="setting-field">
+                            <label for="ads-cpc">💲 CPC Rate ($ per 1000 clicks)</label>
+                            <input type="number" id="ads-cpc" min="0" step="0.01" value="2.00" placeholder="e.g. 2.00">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Banner Ad -->
+                <div class="ads-section">
+                    <h3>📰 Banner Ad Slots (Top &amp; Bottom)</h3>
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">Show Banner Ads</div>
+                            <div class="ads-toggle-sub">Displayed above and below the main content on the redirect page.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="banner-ads-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="ad-slot-preview">Banner slot → full-width strip (728×90 or responsive)</div>
+                    <label class="ad-code-label" for="banner-ad-code">🖊 Banner Ad Code (HTML / Script)</label>
+                    <textarea class="ad-code-textarea" id="banner-ad-code"
+                        placeholder="Paste your ad network banner script here...&#10;e.g. <script async src='...'></script>&#10;or <ins class='adsbygoogle' ...></ins>"></textarea>
+                    <p class="ad-code-note">💡 This code will be injected into the top &amp; bottom banner ad slots on the redirect page.</p>
+                </div>
+
+                <!-- Square Ad -->
+                <div class="ads-section">
+                    <h3>🔲 Square Ad Slot (Countdown Box – 300×250)</h3>
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">Show Square / Box Ad</div>
+                            <div class="ads-toggle-sub">Displayed inside the countdown card while the timer runs.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="square-ads-enabled" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="ad-slot-preview">Square slot → 300×250 box inside countdown card</div>
+                    <label class="ad-code-label" for="square-ad-code">🖊 Square Ad Code (HTML / Script)</label>
+                    <textarea class="ad-code-textarea" id="square-ad-code"
+                        placeholder="Paste your square/box ad script here...&#10;e.g. <script async src='...'></script>&#10;or <ins class='adsbygoogle' ...></ins>"></textarea>
+                    <p class="ad-code-note">💡 This code will be injected inside the countdown box on the redirect page.</p>
+                </div>
+
+                <!-- Interstitial / Popup Ad -->
+                <div class="ads-section">
+                    <h3>💥 Pop-up / Interstitial Ad</h3>
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">Enable Pop-up Ad on Link Access</div>
+                            <div class="ads-toggle-sub">Fires an ad script when a user first opens the redirect page.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="popup-ads-enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <label class="ad-code-label" for="popup-ad-code">🖊 Pop-up / Interstitial Ad Code</label>
+                    <textarea class="ad-code-textarea" id="popup-ad-code"
+                        placeholder="Paste your interstitial or pop-up ad script here...&#10;This runs once when the page loads."></textarea>
+                    <p class="ad-code-note">⚠️ Use responsibly — excessive pop-ups degrade user experience.</p>
+                </div>
+
+                <!-- ═══ Header Script ═══ -->
+                <div class="ads-section">
+                    <h3>🧩 Header Script (injected into &lt;head&gt;)</h3>
+                    <div class="ads-toggle-row">
+                        <div>
+                            <div class="ads-toggle-label">Enable Header Script on Redirect Page</div>
+                            <div class="ads-toggle-sub">Injects your script into the &lt;head&gt; of the redirect page — ideal for Monetag, AdSense global scripts, etc.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="header-script-enabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="ad-slot-preview">This script is injected inside &lt;head&gt; before the page renders</div>
+                    <label class="ad-code-label" for="header-script-code">🖊 Header Script Code</label>
+                    <textarea class="ad-code-textarea" id="header-script-code" style="min-height:130px;"
+                        placeholder="Paste your header ad network script here...&#10;e.g. &lt;script src='https://...'&gt;&lt;/script&gt;&#10;Works with Monetag, Google AdSense, PropellerAds, etc."></textarea>
+                    <p class="ad-code-note">💡 The script will be appended to &lt;head&gt; on the redirect page every time a visitor opens a shortened link.</p>
+                </div>
+
+                <!-- Save Button -->
+                <div class="ads-save-row">
+                    <button class="btn btn-primary" onclick="saveAdSettings()" id="save-ads-btn" style="padding:0.8rem 2rem;">
+                        💾 Save Ad Settings
+                    </button>
+                    <span id="ads-save-status"></span>
+                </div>
+            </div>
+            <!-- ══ END ADS TAB ══ -->
+
         </div>
     </div>
 </main>
@@ -99,20 +327,51 @@
 </footer>
 
 <script>
+/* ════════════════════════════════════════════════
+   PASSWORD GATE
+════════════════════════════════════════════════ */
+const ADMIN_PASSWORD = '113003';
+
+function checkPassword() {
+    const input = document.getElementById('gate-input');
+    const err   = document.getElementById('gate-error');
+    if (input.value === ADMIN_PASSWORD) {
+        document.getElementById('password-gate').style.display = 'none';
+        sessionStorage.setItem('admin_auth', '1');
+        initAdmin();
+    } else {
+        err.textContent = 'Incorrect password. Please try again.';
+        input.classList.add('error');
+        input.value = '';
+        setTimeout(() => input.classList.remove('error'), 500);
+    }
+}
+
+// If already authenticated this session, skip gate
+if (sessionStorage.getItem('admin_auth') === '1') {
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('password-gate').style.display = 'none';
+        initAdmin();
+    });
+}
+
+/* ════════════════════════════════════════════════
+   DATA
+════════════════════════════════════════════════ */
 let usersData = [], linksData = [], payoutsData = [];
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initAdmin() {
     try {
-        await fetchGlobalData();
+        await Promise.all([fetchGlobalData(), loadAdSettings()]);
         document.getElementById('loading').classList.add('hidden');
         const ac = document.getElementById('admin-content');
         ac.classList.remove('hidden');
         ac.style.display = 'block';
     } catch(err) {
-        document.getElementById('loading').innerText = "Error loading admin data.";
+        document.getElementById('loading').innerText = 'Error loading admin data.';
         console.error(err);
     }
-});
+}
 
 async function fetchGlobalData() {
     const [ru, rl, rp] = await Promise.all([
@@ -120,16 +379,103 @@ async function fetchGlobalData() {
         window.supabaseClient.from('links').select('*').order('created_at', { ascending: false }),
         window.supabaseClient.from('payouts').select('*').order('created_at', { ascending: false })
     ]);
-    usersData = ru.data || [];
-    linksData = rl.data || [];
+    usersData   = ru.data || [];
+    linksData   = rl.data || [];
     payoutsData = rp.data || [];
     renderUsers(); renderLinks(); renderPayouts();
 }
 
+/* ════════════════════════════════════════════════
+   AD SETTINGS — Load & Save
+════════════════════════════════════════════════ */
+const AD_KEYS = [
+    'ads_enabled', 'ads_countdown', 'ads_cpc',
+    'banner_ads_enabled', 'banner_ad_code',
+    'square_ads_enabled', 'square_ad_code',
+    'popup_ads_enabled',  'popup_ad_code',
+    'header_script_enabled', 'header_script_code'
+];
+
+async function loadAdSettings() {
+    const { data, error } = await window.supabaseClient
+        .from('settings')
+        .select('key, value')
+        .in('key', AD_KEYS);
+
+    if (error) { console.warn('Could not load ad settings:', error.message); return; }
+
+    const map = {};
+    (data || []).forEach(row => map[row.key] = row.value);
+
+    // Apply to UI
+    setToggle('ads-enabled-toggle',   map['ads_enabled']       !== 'false');
+    setToggle('banner-ads-enabled',   map['banner_ads_enabled'] !== 'false');
+    setToggle('square-ads-enabled',   map['square_ads_enabled'] !== 'false');
+    setToggle('popup-ads-enabled',      map['popup_ads_enabled']       === 'true');
+    setToggle('header-script-enabled',  map['header_script_enabled']   === 'true');
+
+    if (map['ads_countdown'])      document.getElementById('ads-countdown').value      = map['ads_countdown'];
+    if (map['ads_cpc'])            document.getElementById('ads-cpc').value            = map['ads_cpc'];
+    if (map['banner_ad_code'])     document.getElementById('banner-ad-code').value     = map['banner_ad_code'];
+    if (map['square_ad_code'])     document.getElementById('square-ad-code').value     = map['square_ad_code'];
+    if (map['popup_ad_code'])      document.getElementById('popup-ad-code').value      = map['popup_ad_code'];
+    if (map['header_script_code']) document.getElementById('header-script-code').value = map['header_script_code'];
+}
+
+function setToggle(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.checked = !!val;
+}
+
+async function saveAdSettings() {
+    const btn    = document.getElementById('save-ads-btn');
+    const status = document.getElementById('ads-save-status');
+    btn.disabled = true;
+    btn.textContent = '⏳ Saving...';
+    status.textContent = '';
+    status.className = '';
+
+    const upserts = [
+        { key: 'ads_enabled',           value: String(document.getElementById('ads-enabled-toggle').checked) },
+        { key: 'ads_countdown',         value: document.getElementById('ads-countdown').value || '15' },
+        { key: 'ads_cpc',               value: document.getElementById('ads-cpc').value       || '2.00' },
+        { key: 'banner_ads_enabled',    value: String(document.getElementById('banner-ads-enabled').checked) },
+        { key: 'banner_ad_code',        value: document.getElementById('banner-ad-code').value },
+        { key: 'square_ads_enabled',    value: String(document.getElementById('square-ads-enabled').checked) },
+        { key: 'square_ad_code',        value: document.getElementById('square-ad-code').value },
+        { key: 'popup_ads_enabled',     value: String(document.getElementById('popup-ads-enabled').checked) },
+        { key: 'popup_ad_code',         value: document.getElementById('popup-ad-code').value },
+        { key: 'header_script_enabled', value: String(document.getElementById('header-script-enabled').checked) },
+        { key: 'header_script_code',    value: document.getElementById('header-script-code').value },
+    ];
+
+    const { error } = await window.supabaseClient
+        .from('settings')
+        .upsert(upserts, { onConflict: 'key' });
+
+    btn.disabled = false;
+    btn.textContent = '💾 Save Ad Settings';
+
+    if (error) {
+        status.textContent = '✗ Save failed: ' + error.message;
+        status.className = 'error';
+    } else {
+        status.textContent = '✓ Settings saved successfully!';
+        status.className = 'success';
+        setTimeout(() => { status.textContent = ''; status.className = ''; }, 4000);
+    }
+}
+
+/* ════════════════════════════════════════════════
+   RENDER TABLES
+════════════════════════════════════════════════ */
 function renderUsers() {
     const tbody = document.getElementById('admin-users-list');
     tbody.innerHTML = '';
-    if (!usersData.length) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--secondary-color);">No users yet.</td></tr>'; return; }
+    if (!usersData.length) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--secondary-color);">No users yet.</td></tr>';
+        return;
+    }
     usersData.forEach(u => {
         tbody.innerHTML += `<tr>
             <td class="font-medium text-primary truncate" style="max-width:150px;" title="${u.email || u.id}">${u.email || u.id.substring(0,12) + '...'}</td>
@@ -142,7 +488,10 @@ function renderUsers() {
 function renderLinks() {
     const tbody = document.getElementById('admin-links-list');
     tbody.innerHTML = '';
-    if (!linksData.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--secondary-color);">No links yet.</td></tr>'; return; }
+    if (!linksData.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--secondary-color);">No links yet.</td></tr>';
+        return;
+    }
     linksData.forEach(l => {
         tbody.innerHTML += `<tr>
             <td class="font-medium" style="font-family:monospace;">${l.short_code}</td>
@@ -177,6 +526,9 @@ function renderPayouts() {
     });
 }
 
+/* ════════════════════════════════════════════════
+   UTILITY
+════════════════════════════════════════════════ */
 function switchTab(tabName) {
     document.querySelectorAll('.admin-view').forEach(el => el.classList.add('hidden'));
     document.getElementById('view-' + tabName).classList.remove('hidden');

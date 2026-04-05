@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="monetag" content="92ab5bb619933c015584074abda33ac0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting... - SnipAd</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +14,9 @@
     <style>
         @keyframes spin { to { transform: rotate(360deg); } }
         .spinner { width:3rem;height:3rem;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem; }
+        /* Ad containers: hidden by default, shown only when ads are enabled */
+        .ad-wrapper { display: none; }
+        .ad-wrapper.ads-visible { display: block; }
     </style>
 </head>
 <body class="flex flex-col">
@@ -34,9 +38,9 @@
     </div>
 </header>
 
-<!-- Top Ad -->
-<div class="container">
-    <div class="ad-placeholder">Advertisement</div>
+<!-- Top Banner Ad -->
+<div class="ad-wrapper container" id="top-banner-ad">
+    <div class="ad-placeholder" id="top-banner-content">Advertisement</div>
 </div>
 
 <main class="flex-1 flex flex-col items-center justify-center" style="padding:1.5rem 1.25rem;">
@@ -56,8 +60,10 @@
     <div id="countdown-state" class="card hidden text-center" style="max-width:32rem;width:100%;">
         <h1 style="font-size:clamp(1.2rem,4vw,1.75rem);font-weight:800;margin-bottom:1.25rem;">Your link is almost ready</h1>
 
-        <!-- Ad Square -->
-        <div class="ad-placeholder ad-square mb-4">Advertisement (300x250)</div>
+        <!-- Square Ad inside countdown -->
+        <div class="ad-wrapper" id="square-ad-wrapper">
+            <div class="ad-placeholder ad-square mb-4" id="square-ad-content">Advertisement (300x250)</div>
+        </div>
 
         <div id="timer-box">
             <p class="text-secondary mb-3" style="font-size:0.95rem;">Please wait for the timer...</p>
@@ -75,10 +81,13 @@
 
 </main>
 
-<!-- Bottom Ad -->
-<div class="container">
-    <div class="ad-placeholder">Advertisement</div>
+<!-- Bottom Banner Ad -->
+<div class="ad-wrapper container" id="bottom-banner-ad">
+    <div class="ad-placeholder" id="bottom-banner-content">Advertisement</div>
 </div>
+
+<!-- Pop-up / Interstitial Ad Container (invisible) -->
+<div id="popup-ad-container" style="display:none;"></div>
 
 <footer>
     <div class="footer-inner text-secondary text-sm">
@@ -88,9 +97,127 @@
 </footer>
 
 <script>
+/* ══════════════════════════════════════════
+   AD SETTINGS LOADER
+══════════════════════════════════════════ */
+const AD_SETTING_KEYS = [
+    'ads_enabled', 'ads_countdown',
+    'banner_ads_enabled', 'banner_ad_code',
+    'square_ads_enabled', 'square_ad_code',
+    'popup_ads_enabled',  'popup_ad_code',
+    'header_script_enabled', 'header_script_code'
+];
+
+let adSettings = {};
+
+async function loadAdSettings() {
+    try {
+        const { data } = await window.supabaseClient
+            .from('settings')
+            .select('key, value')
+            .in('key', AD_SETTING_KEYS);
+        (data || []).forEach(row => adSettings[row.key] = row.value);
+    } catch(e) {
+        console.warn('Ad settings unavailable:', e);
+    }
+    applyAds();
+}
+
+function injectCode(containerId, code) {
+    // Create a temporary div, parse HTML, then execute <script> tags
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = code;
+    // Re-execute any script tags in the injected code
+    container.querySelectorAll('script').forEach(oldScript => {
+        const newScript = document.createElement('script');
+        [...oldScript.attributes].forEach(attr => newScript.setAttribute(attr.name, attr.value));
+        newScript.textContent = oldScript.textContent;
+        oldScript.parentNode.replaceChild(newScript, oldScript);
+    });
+}
+
+function injectIntoHead(code) {
+    // Parse the raw HTML string and append each element to <head>
+    // so scripts, link tags, and meta tags are properly executed
+    const temp = document.createElement('div');
+    temp.innerHTML = code;
+    [...temp.childNodes].forEach(node => {
+        if (node.nodeType !== 1) return; // element nodes only
+        const tag = node.tagName.toLowerCase();
+        let el;
+        if (tag === 'script') {
+            el = document.createElement('script');
+            [...node.attributes].forEach(attr => el.setAttribute(attr.name, attr.value));
+            el.textContent = node.textContent;
+        } else if (tag === 'link') {
+            el = document.createElement('link');
+            [...node.attributes].forEach(attr => el.setAttribute(attr.name, attr.value));
+        } else if (tag === 'meta') {
+            el = document.createElement('meta');
+            [...node.attributes].forEach(attr => el.setAttribute(attr.name, attr.value));
+        } else {
+            el = node.cloneNode(true);
+        }
+        document.head.appendChild(el);
+    });
+}
+
+function applyAds() {
+    const globalEnabled  = adSettings['ads_enabled']       !== 'false';
+    const bannerEnabled  = adSettings['banner_ads_enabled'] !== 'false';
+    const squareEnabled  = adSettings['square_ads_enabled'] !== 'false';
+    const popupEnabled   = adSettings['popup_ads_enabled']  === 'true';
+    const bannerCode     = adSettings['banner_ad_code']  || '';
+    const squareCode     = adSettings['square_ad_code']  || '';
+    const popupCode      = adSettings['popup_ad_code']   || '';
+
+    if (!globalEnabled) return; // All ads disabled
+
+    // ── Banner Ads ──
+    if (bannerEnabled) {
+        ['top-banner-ad', 'bottom-banner-ad'].forEach(id => {
+            const wrapper = document.getElementById(id);
+            if (wrapper) wrapper.classList.add('ads-visible');
+        });
+        if (bannerCode.trim()) {
+            injectCode('top-banner-content', bannerCode);
+            injectCode('bottom-banner-content', bannerCode);
+        }
+    }
+
+    // ── Square Ad ──
+    if (squareEnabled) {
+        const wrapper = document.getElementById('square-ad-wrapper');
+        if (wrapper) wrapper.classList.add('ads-visible');
+        if (squareCode.trim()) {
+            injectCode('square-ad-content', squareCode);
+        }
+    }
+
+    // ── Pop-up / Interstitial ──
+    if (popupEnabled && popupCode.trim()) {
+        const popup = document.getElementById('popup-ad-container');
+        if (popup) injectCode('popup-ad-container', popupCode);
+    }
+
+    // ── Header Script (inject into <head>) ──
+    const headerEnabled = adSettings['header_script_enabled'] === 'true';
+    const headerCode    = adSettings['header_script_code'] || '';
+    if (headerEnabled && headerCode.trim()) {
+        injectIntoHead(headerCode);
+    }
+}
+
+/* ══════════════════════════════════════════
+   REDIRECT LOGIC
+══════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const shortCode = urlParams.get('id');
+    // Load ads in parallel with link lookup
+    const adPromise = loadAdSettings();
+
+    const urlParams  = new URLSearchParams(window.location.search);
+    const shortCode  = urlParams.get('id');
 
     if (!shortCode) { showError("Invalid or missing short code."); return; }
 
@@ -106,11 +233,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Record click async
         window.supabaseClient.from('clicks').insert([{
-            link_id: data.id,
+            link_id:  data.id,
             referrer: document.referrer || 'direct',
-            device: /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
+            device:   /Mobi|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop'
         }]).then(() => {});
 
+        // Wait for ad settings before starting countdown (so ads show from tick 1)
+        await adPromise;
         startCountdown(data.original_url);
 
     } catch (err) {
@@ -128,8 +257,12 @@ function startCountdown(targetUrl) {
     document.getElementById('loading-state').classList.add('hidden');
     document.getElementById('countdown-state').classList.remove('hidden');
 
-    let timeLeft = 15;
+    // Use the admin-configured countdown, default 15s
+    let timeLeft = parseInt(adSettings['ads_countdown'] || '15', 10);
+    if (isNaN(timeLeft) || timeLeft < 1) timeLeft = 15;
+
     const timerNumber = document.getElementById('timer-number');
+    timerNumber.innerText = timeLeft;
 
     const interval = setInterval(() => {
         timeLeft -= 1;
