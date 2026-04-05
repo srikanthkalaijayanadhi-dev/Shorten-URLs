@@ -68,6 +68,19 @@ a:hover { text-decoration: underline; }
 .w-full { width: 100%; }
 .flex-1 { flex: 1; }
 .hidden { display: none !important; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.w-16 { width: 4rem; }
+.h-16 { height: 4rem; }
+.h-24 { height: 6rem; }
+.h-64 { height: 16rem; }
+.max-w-md { max-width: 28rem; }
+.max-w-lg { max-width: 32rem; }
+.max-w-6xl { max-width: 72rem; }
+.overflow-x-auto { overflow-x: auto; }
+.overflow-hidden { overflow: hidden; }
+.whitespace-nowrap { white-space: nowrap; }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.font-mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
 /* Layout classes */
 .grid { display: grid; }
@@ -76,6 +89,7 @@ a:hover { text-decoration: underline; }
   .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
   .md\:grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
   .md\:flex-row { flex-direction: row; }
+  .md\:w-64 { width: 16rem; }
 }
 
 /* Margin / Padding */
@@ -184,3 +198,44 @@ body.dark .hero-gradient { background: linear-gradient(135deg, var(--bg-color) 0
 .text-xl { font-size: 1.25rem; }
 .text-3xl { font-size: 1.875rem; }
 .text-4xl { font-size: 2.25rem; }
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-btn {
+  display: block;
+  width: 100%;
+  padding: 1rem 1.25rem;
+  text-align: left;
+  background: transparent;
+  color: var(--secondary-color);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: inherit;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.sidebar-btn:hover {
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  border-color: var(--border-color);
+}
+
+.sidebar-btn.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+body.dark .sidebar-btn.active {
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
