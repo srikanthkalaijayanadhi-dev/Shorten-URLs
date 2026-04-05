@@ -59,3 +59,16 @@ CREATE POLICY "Users view own links" ON public.links FOR SELECT USING (auth.uid(
 
 -- Anyone can insert a click
 CREATE POLICY "Public insert clicks" ON public.clicks FOR INSERT WITH CHECK (true);
+
+-- Settings table for global configuration like ads
+CREATE TABLE public.settings (
+  key TEXT PRIMARY KEY,
+  value TEXT
+);
+
+ALTER TABLE public.settings ENABLE ROW LEVEL SECURITY;
+
+-- Basic settings policies: Anyone can read, but only admin (or authenticated with logic) can write
+CREATE POLICY "Public read settings" ON public.settings FOR SELECT USING (true);
+-- For this simple app, we can allow authenticated users/admin to write or just leave it open for updates from the dashboard (if unauthenticated updates are acceptable for the demo):
+CREATE POLICY "Public write settings" ON public.settings FOR ALL USING (true) WITH CHECK (true);

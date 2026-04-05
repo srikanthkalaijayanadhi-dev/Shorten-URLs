@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="mnd-ver" content="dsnacmhmqkdohqh4ewdfa" />
+    <script async src="https://ss.mrmnd.com/interstitial.js" data-mndintid="2b85e1ed-b9f7-47e0-a3a2-2bb8de405809"></script>
+    <script async src="https://ss.mrmnd.com/native.js"></script>
+    <script async src="https://ss.mrmnd.com/static/7384f9cf-5c3b-4538-8617-ada8d46969fd.js"></script>
+    <script async src="https://ss.mrmnd.com/banner.js"></script>
     <title>Admin - SnipAd</title>
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -26,18 +30,30 @@
 </header>
 
 <main class="flex-1 container py-8 max-w-6xl">
-    <div id="loading" class="text-center py-10">Verifying Admin Privileges...</div>
+    
+    <!-- Admin Login -->
+    <div id="admin-login" class="max-w-md mx-auto card mt-10">
+        <h2 class="text-2xl font-bold mb-4 text-center">Admin Access Restricted</h2>
+        <div class="flex flex-col gap-4">
+            <input type="password" id="admin-password" class="input" placeholder="Enter Admin Password">
+            <button onclick="checkAdminPassword()" class="btn btn-primary">Login</button>
+            <p id="login-error" class="text-danger text-sm hidden">Incorrect Password.</p>
+        </div>
+    </div>
+
+    <div id="loading" class="text-center py-10 hidden">Verifying Admin Privileges...</div>
 
     <div id="admin-content" class="flex flex-col md:flex-row gap-8 hidden">
         <!-- Sidebar Navigation -->
-        <div class="w-full md:w-64 flex flex-col gap-2">
-            <button onclick="switchTab('users')" id="tab-users" class="p-4 text-left font-medium rounded-lg transition-colors bg-primary text-white">Manage Users</button>
-            <button onclick="switchTab('links')" id="tab-links" class="p-4 text-left font-medium rounded-lg transition-colors bg-card hover:bg-bg-color">Moderate Links</button>
-            <button onclick="switchTab('payouts')" id="tab-payouts" class="p-4 text-left font-medium rounded-lg transition-colors bg-card hover:bg-bg-color">Payout Requests</button>
+        <div class="w-full md:w-64 flex flex-col gap-2 sidebar-nav">
+            <button onclick="switchTab('users')" id="tab-users" class="sidebar-btn active">Manage Users</button>
+            <button onclick="switchTab('links')" id="tab-links" class="sidebar-btn">Moderate Links</button>
+            <button onclick="switchTab('payouts')" id="tab-payouts" class="sidebar-btn">Payout Requests</button>
+            <button onclick="switchTab('ads')" id="tab-ads" class="sidebar-btn">Ad Placements</button>
         </div>
 
         <!-- Content Area -->
-        <div class="flex-1 card overflow-x-auto min-h-[500px]">
+        <div class="flex-1 card overflow-x-auto" style="min-height: 500px">
             
             <!-- Users Tab -->
             <div id="view-users" class="admin-view">
@@ -66,6 +82,38 @@
                 </table>
             </div>
 
+            <!-- Ads Tab -->
+            <div id="view-ads" class="admin-view hidden">
+                <h2 class="text-xl font-bold mb-6">Ad Placement Controls</h2>
+                <p class="text-sm text-secondary mb-4">Paste the HTML / Script code for each ad zone. These update instantly across the site.</p>
+                
+                <div class="flex flex-col gap-6">
+                    <div class="card bg-bg-color">
+                        <label class="block font-bold mb-2">Global &lt;head&gt; Scripts</label>
+                        <textarea id="ad-head" class="input font-mono w-full h-24 mb-2" placeholder="<script>...</script>"></textarea>
+                        <button onclick="saveAd('head_script', 'ad-head')" class="btn btn-primary btn-sm">Save Head Scripts</button>
+                    </div>
+
+                    <div class="card bg-bg-color">
+                        <label class="block font-bold mb-2">Top Banner (728x90) - index & redirect pages</label>
+                        <textarea id="ad-banner-top" class="input font-mono w-full h-24 mb-2" placeholder="<div data-mndbanid='...'></div>"></textarea>
+                        <button onclick="saveAd('banner_top', 'ad-banner-top')" class="btn btn-primary btn-sm">Save Top Banner</button>
+                    </div>
+
+                    <div class="card bg-bg-color">
+                        <label class="block font-bold mb-2">Square Ad (300x250) - redirect specific</label>
+                        <textarea id="ad-square" class="input font-mono w-full h-24 mb-2" placeholder="<div data-mndbanid='...'></div>"></textarea>
+                        <button onclick="saveAd('ad_square', 'ad-square')" class="btn btn-primary btn-sm">Save Square Ad</button>
+                    </div>
+
+                    <div class="card bg-bg-color">
+                        <label class="block font-bold mb-2">Bottom Banner</label>
+                        <textarea id="ad-banner-bottom" class="input font-mono w-full h-24 mb-2" placeholder="<div data-mndbanid='...'></div>"></textarea>
+                        <button onclick="saveAd('banner_bottom', 'ad-banner-bottom')" class="btn btn-primary btn-sm">Save Bottom Banner</button>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </main>
@@ -76,17 +124,60 @@ let linksData = [];
 let payoutsData = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // No auth required
+    // Wait for password
+});
+
+function checkAdminPassword() {
+    const pw = document.getElementById('admin-password').value;
+    if(pw === '113003') {
+        document.getElementById('admin-login').classList.add('hidden');
+        document.getElementById('loading').classList.remove('hidden');
+        loadAdminDashboard();
+    } else {
+        document.getElementById('login-error').classList.remove('hidden');
+    }
+}
+
+async function loadAdminDashboard() {
     try {
+        await fetchGlobalData();
+        await fetchAds();
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('admin-content').classList.remove('hidden');
-        document.getElementById('admin-content').style.display = 'flex'; // override class logic for flex row
-
-        await fetchGlobalData();
+        document.getElementById('admin-content').style.display = 'flex';
     } catch(err) {
         document.getElementById('loading').innerText = "An error occurred fetching data.";
     }
-});
+}
+
+async function fetchAds() {
+    const { data } = await window.supabaseClient.from('settings').select('*');
+    if(data) {
+        data.forEach(setting => {
+            if(setting.key === 'head_script') document.getElementById('ad-head').value = setting.value || '';
+            if(setting.key === 'banner_top') document.getElementById('ad-banner-top').value = setting.value || '';
+            if(setting.key === 'banner_bottom') document.getElementById('ad-banner-bottom').value = setting.value || '';
+            if(setting.key === 'ad_square') document.getElementById('ad-square').value = setting.value || '';
+        });
+    }
+}
+
+async function saveAd(keyName, inputId) {
+    const val = document.getElementById(inputId).value;
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "Saving...";
+    
+    const { error } = await window.supabaseClient.from('settings').upsert({ key: keyName, value: val });
+    
+    if(!error) {
+        btn.innerText = "Saved!";
+    } else {
+        btn.innerText = "Error!";
+        alert(error.message);
+    }
+    setTimeout(() => { btn.innerText = originalText; }, 2000);
+}
 
 async function fetchGlobalData() {
     // Bring all data
@@ -162,9 +253,9 @@ function switchTab(tabName) {
     document.getElementById('view-' + tabName).classList.remove('hidden');
 
     document.querySelectorAll('[id^="tab-"]').forEach(el => {
-        el.className = 'p-4 text-left font-medium rounded-lg transition-colors bg-card hover:bg-bg-color';
+        el.className = 'sidebar-btn';
     });
-    document.getElementById('tab-' + tabName).className = 'p-4 text-left font-medium rounded-lg transition-colors bg-primary text-white';
+    document.getElementById('tab-' + tabName).className = 'sidebar-btn active';
 }
 
 async function toggleBan(linkId, currentStatus) {
