@@ -3,14 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="mnd-ver" content="dsnacmhmqkdohqh4ewdfa" />
-    <script async src="https://ss.mrmnd.com/interstitial.js" data-mndintid="2b85e1ed-b9f7-47e0-a3a2-2bb8de405809"></script>
-    <script async src="https://ss.mrmnd.com/native.js"></script>
-    <script async src="https://ss.mrmnd.com/static/7384f9cf-5c3b-4538-8617-ada8d46969fd.js"></script>
     <title>Dashboard - SnipAd</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- Use Chart.js directly via CDN for charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="assets/supabase.js"></script>
     <script src="assets/main.js"></script>
@@ -18,135 +15,151 @@
 <body class="flex flex-col">
 
 <header>
-    <div class="container py-4 flex items-center justify-between">
-        <a href="index.html" class="font-bold text-xl text-primary">SnipAd</a>
-        <nav class="flex items-center gap-6">
-            <button id="theme-toggle" class="btn btn-secondary text-sm">Dark Mode</button>
-            <div id="auth-links" class="flex items-center"></div>
-        </nav>
+    <div class="navbar-inner">
+        <a href="index.html" class="navbar-logo">⚡ SnipAd</a>
+        <div class="navbar-links">
+            <button id="theme-toggle" class="btn btn-secondary" style="font-size:0.9rem;padding:0.6rem 1rem;">Dark Mode</button>
+            <a href="admin.html" class="btn btn-primary" style="font-size:0.9rem;padding:0.6rem 1rem;">Admin Panel</a>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="admin.html" class="btn btn-primary">Admin Panel</a>
+        <a href="index.html" class="btn btn-secondary">Shorten URL</a>
+        <button id="theme-toggle-mobile" class="btn btn-secondary">Dark Mode</button>
     </div>
 </header>
 
-<main class="flex-1 container py-8 flex flex-col md:flex-row gap-6">
-    <div id="loading" class="w-full text-center py-10">Loading Dashboard...</div>
-    
-    <div id="dashboard-content" class="w-full flex-col md:flex-row gap-6 hidden">
+<main class="flex-1">
+    <div id="loading" style="text-align:center;padding:4rem 1rem;color:var(--secondary-color);">Loading Dashboard...</div>
+
+    <div id="dashboard-content" class="dash-layout hidden">
+
         <!-- Sidebar -->
-        <div class="w-full md:w-64 flex flex-col gap-4">
+        <div class="sidebar-panel flex flex-col gap-4">
             <div class="card text-center">
-                <div id="user-initial" class="w-16 h-16 bg-primary rounded-full text-white flex items-center justify-center text-xl font-bold mx-auto mb-4 tracking-tighter" style="border-radius: 50%;">?</div>
-                <p id="user-email" class="font-semibold text-lg overflow-hidden text-ellipsis">-</p>
-                <div class="mt-2 text-sm">
+                <div id="user-initial" style="width:4rem;height:4rem;background:var(--primary-color);border-radius:50%;color:white;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;margin:0 auto 1rem;">P</div>
+                <p id="user-email" class="font-semibold" style="font-size:0.95rem;word-break:break-all;">Public Dashboard</p>
+                <div class="mt-2">
                     <span class="badge badge-success">Publisher</span>
-                    <a id="admin-btn" href="admin.html" class="mt-4 btn btn-secondary w-full text-sm py-2 hidden">Go to Admin Panel</a>
                 </div>
+                <a id="admin-btn" href="admin.html" class="btn btn-secondary w-full mt-4 hidden" style="font-size:0.9rem;">Go to Admin Panel</a>
             </div>
 
-            <div id="ad-zone-square" class="ad-placeholder h-64 mb-4">Sidebar Ad (300x250)</div>
+            <div class="ad-placeholder" style="min-height:200px;">Ad (300x250)</div>
         </div>
 
-        <!-- Main Stats -->
-        <div class="flex-1 flex flex-col gap-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="card flex items-center gap-4 border-l-4" style="border-left-color: #3b82f6;">
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col gap-4" style="min-width:0;">
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="card flex items-center gap-3" style="border-left:4px solid var(--primary-color);">
                     <div>
-                        <p class="text-secondary text-sm font-medium">Total Clicks</p>
-                        <h3 id="stat-clicks" class="text-2xl font-bold">0</h3>
+                        <p class="text-secondary text-sm">Total Clicks</p>
+                        <h3 id="stat-clicks" class="font-bold" style="font-size:1.75rem;">0</h3>
                     </div>
                 </div>
-                <div class="card flex items-center gap-4 border-l-4" style="border-left-color: #22c55e;">
+                <div class="card flex items-center gap-3" style="border-left:4px solid var(--success-color);">
                     <div>
-                        <p class="text-secondary text-sm font-medium">Total Earnings</p>
-                        <h3 id="stat-earnings" class="text-2xl font-bold">$0.0000</h3>
+                        <p class="text-secondary text-sm">Total Earnings</p>
+                        <h3 id="stat-earnings" class="font-bold" style="font-size:1.75rem;">$0.00</h3>
                     </div>
                 </div>
-                <div class="card flex items-center gap-4 border-l-4" style="border-left-color: #8b5cf6;">
+                <div class="card flex items-center gap-3" style="border-left:4px solid #8b5cf6;">
                     <div>
-                        <p class="text-secondary text-sm font-medium">Avg CPM</p>
-                        <h3 class="text-2xl font-bold">$5.00</h3>
+                        <p class="text-secondary text-sm">Avg CPM</p>
+                        <h3 class="font-bold" style="font-size:1.75rem;">$5.00</h3>
                     </div>
                 </div>
             </div>
 
-            <!-- Charts & Payouts -->
+            <!-- Chart Card -->
             <div class="card">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-xl font-bold">Performance Overview</h2>
-                    <button id="payout-toggle" class="btn btn-primary">Request Payout</button>
+                <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.75rem;margin-bottom:1.25rem;">
+                    <h2 class="font-bold" style="font-size:1.1rem;">Performance Overview</h2>
+                    <button id="payout-toggle" class="btn btn-primary" style="font-size:0.9rem;">Request Payout</button>
                 </div>
 
-                <div id="payout-form" class="mb-6 p-4 border border-color rounded-lg bg-bg-color hidden transition-all">
+                <!-- Payout Form -->
+                <div id="payout-form" class="hidden mb-4 p-4 border border-color rounded-lg" style="border-radius:var(--radius-md);border:1px solid var(--border-color);background:var(--bg-color);">
                     <h3 class="font-bold mb-4">Request Withdrawal</h3>
-                    <form id="submit-payout" class="flex flex-col md:flex-row gap-4 items-end">
-                        <div class="flex-1">
-                            <label class="text-sm font-medium block mb-1">Method</label>
-                            <select id="withdraw-method" class="input">
+                    <form id="submit-payout" style="display:flex;flex-direction:column;gap:0.75rem;">
+                        <div>
+                            <label class="text-sm font-medium" style="display:block;margin-bottom:0.4rem;">Method</label>
+                            <select id="withdraw-method" class="input" title="Withdrawal method">
                                 <option value="paypal">PayPal</option>
                                 <option value="upi">UPI</option>
                                 <option value="bank">Bank Transfer</option>
                             </select>
                         </div>
-                        <div class="flex-1">
-                            <label class="text-sm font-medium block mb-1">Details</label>
-                            <input id="withdraw-details" type="text" required class="input" placeholder="Enter details">
+                        <div>
+                            <label class="text-sm font-medium" style="display:block;margin-bottom:0.4rem;">Payment Details (Email / UPI ID)</label>
+                            <input id="withdraw-details" type="text" required class="input" placeholder="Enter your payment details">
                         </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
+                        <button type="submit" class="btn btn-primary w-full">Submit Request</button>
+                        <p class="text-sm text-secondary text-center">Minimum payout threshold is $5.00.</p>
                     </form>
-                    <p class="text-xs text-secondary mt-2">Minimum threshold $5.00.</p>
                 </div>
 
-                <div style="height: 300px; width: 100%;">
+                <div style="height:260px;width:100%;">
                     <canvas id="performanceChart"></canvas>
                 </div>
             </div>
 
             <!-- Links Table -->
-            <div class="card overflow-x-auto">
-                <h2 class="text-xl font-bold mb-4">Your Links</h2>
-                <table class="w-full text-sm">
-                    <thead>
-                        <tr>
-                            <th>Short Link</th>
-                            <th>Original URL</th>
-                            <th>Clicks</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="links-table-body">
-                        <!-- Filled by JS -->
-                    </tbody>
-                </table>
+            <div class="card">
+                <h2 class="font-bold mb-4" style="font-size:1.1rem;">All Links</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Short Code</th>
+                                <th>Original URL</th>
+                                <th>Clicks</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="links-table-body"></tbody>
+                    </table>
+                </div>
                 <div id="no-links-msg" class="text-center py-8 text-secondary hidden">
-                    <p>You haven't shortened any links yet.</p>
+                    <p style="font-size:2rem;margin-bottom:0.5rem;">🔗</p>
+                    <p>No links shortened yet. <a href="index.html">Create one!</a></p>
                 </div>
             </div>
+
         </div>
     </div>
 </main>
 
+<footer>
+    <div class="footer-inner text-secondary text-sm">
+        <div>&copy; 2026 SnipAd. All rights reserved.</div>
+        <a href="index.html" class="text-secondary">Shorten a URL →</a>
+    </div>
+</footer>
+
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
-    // Completely Free Access
-    const user = { email: 'Public Dashboard', id: 'public-mode' };
-    document.getElementById('user-email').innerText = user.email;
-    document.getElementById('user-initial').innerText = 'P';
-
     try {
-        document.getElementById('admin-btn').classList.remove('hidden'); // Always show admin panel too since it's "set free"
-
-        // Fetch All Links indiscriminately for the public dashboard
-        const { data: links } = await window.supabaseClient.from('links').select('*').order('created_at', { ascending: false });
+        const { data: links } = await window.supabaseClient
+            .from('links')
+            .select('*')
+            .order('created_at', { ascending: false });
 
         let totalClicks = 0;
         const tbody = document.getElementById('links-table-body');
-        
+
         if (links && links.length > 0) {
             links.forEach(link => {
                 totalClicks += (link.clicks || 0);
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td class="font-medium text-primary"><a href="${window.location.origin}/redirect.html?id=${link.short_code}" target="_blank">${link.short_code}</a></td>
-                    <td class="truncate" style="max-width:200px" title="${link.original_url}">${link.original_url}</td>
+                    <td><a href="redirect.html?id=${link.short_code}" target="_blank" class="font-medium text-primary" style="font-family:monospace;">${link.short_code}</a></td>
+                    <td class="truncate text-secondary" style="max-width:180px;" title="${link.original_url}">${link.original_url}</td>
                     <td class="font-bold">${link.clicks || 0}</td>
                     <td><span class="badge ${link.status === 'banned' ? 'badge-danger' : 'badge-success'}">${link.status}</span></td>
                 `;
@@ -158,62 +171,57 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const cpm = 5;
         const calcEarnings = (totalClicks / 1000) * cpm;
-        const finalEarnings = calcEarnings;
 
         document.getElementById('stat-clicks').innerText = totalClicks;
-        document.getElementById('stat-earnings').innerText = '$' + finalEarnings.toFixed(4);
+        document.getElementById('stat-earnings').innerText = '$' + calcEarnings.toFixed(4);
+        document.getElementById('admin-btn').classList.remove('hidden');
 
-        // Submitting Layout
         document.getElementById('loading').classList.add('hidden');
-        const dashContainer = document.getElementById('dashboard-content');
-        dashContainer.classList.remove('hidden');
-        dashContainer.classList.add('flex'); // Add flex to make it layout properly
+        const dash = document.getElementById('dashboard-content');
+        dash.classList.remove('hidden');
+        dash.style.display = 'flex';
 
-        // Chart Init
+        // Chart
         const ctx = document.getElementById('performanceChart').getContext('2d');
         new Chart(ctx, {
             type: 'line',
             data: {
                 labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                 datasets: [{
-                    label: 'Simulated Clicks',
+                    label: 'Clicks',
                     data: [12, 19, 3, 5, 2, 3, 15],
                     borderColor: '#3b82f6',
-                    tension: 0.4
+                    backgroundColor: 'rgba(59,130,246,0.08)',
+                    tension: 0.4,
+                    fill: true,
                 }]
             },
-            options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            options: {
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: { y: { beginAtZero: true } }
+            }
         });
 
-        // Payout Form Logic
+        // Payout toggle
         document.getElementById('payout-toggle').addEventListener('click', () => {
             document.getElementById('payout-form').classList.toggle('hidden');
         });
 
         document.getElementById('submit-payout').addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (finalEarnings < 5) return alert("Minimum payout is $5.00");
-            
+            if (calcEarnings < 5) { alert("Minimum payout is $5.00"); return; }
             const method = document.getElementById('withdraw-method').value;
             const details = document.getElementById('withdraw-details').value;
-
             const { error } = await window.supabaseClient.from('payouts').insert([{
-                user_id: user.id,
-                amount: finalEarnings,
-                method: method,
-                payment_details: details,
-                status: 'pending'
+                amount: calcEarnings, method, payment_details: details, status: 'pending'
             }]);
-
             if (error) alert("Error: " + error.message);
-            else {
-                alert("Payout requested successfully.");
-                document.getElementById('payout-form').classList.add('hidden');
-            }
+            else { alert("Payout requested successfully."); document.getElementById('payout-form').classList.add('hidden'); }
         });
 
     } catch (err) {
-        document.getElementById('loading').innerText = "An error occurred fetching dashboard data.";
+        document.getElementById('loading').innerText = "Error loading dashboard.";
         console.error(err);
     }
 });

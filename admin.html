@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="mnd-ver" content="dsnacmhmqkdohqh4ewdfa" />
-    <script async src="https://ss.mrmnd.com/interstitial.js" data-mndintid="2b85e1ed-b9f7-47e0-a3a2-2bb8de405809"></script>
-    <script async src="https://ss.mrmnd.com/native.js"></script>
-    <script async src="https://ss.mrmnd.com/static/7384f9cf-5c3b-4538-8617-ada8d46969fd.js"></script>
-    <script async src="https://ss.mrmnd.com/banner.js"></script>
-    <title>Admin - SnipAd</title>
+    <title>Admin Panel - SnipAd</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/supabase.js"></script>
@@ -17,256 +14,185 @@
 <body class="flex flex-col">
 
 <header>
-    <div class="container py-4 flex items-center justify-between">
-        <div class="flex items-center gap-4">
-            <a href="index.html" class="font-bold text-xl text-primary">SnipAd</a>
-            <span class="badge badge-danger">ADMIN</span>
+    <div class="navbar-inner">
+        <div style="display:flex;align-items:center;gap:0.75rem;">
+            <a href="index.html" class="navbar-logo">⚡ SnipAd</a>
+            <span class="badge badge-danger" style="font-size:0.7rem;">ADMIN</span>
         </div>
-        <nav class="flex items-center gap-6">
-            <a href="dashboard.html" class="btn btn-secondary">Exit Admin</a>
-            <button id="theme-toggle" class="btn btn-secondary text-sm">Dark Mode</button>
-        </nav>
+        <div class="navbar-links">
+            <button id="theme-toggle" class="btn btn-secondary" style="font-size:0.9rem;padding:0.6rem 1rem;">Dark Mode</button>
+            <a href="dashboard.html" class="btn btn-secondary" style="font-size:0.9rem;padding:0.6rem 1rem;">Dashboard</a>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="dashboard.html" class="btn btn-secondary">Dashboard</a>
+        <a href="index.html" class="btn btn-secondary">Home</a>
+        <button id="theme-toggle-mobile" class="btn btn-secondary">Dark Mode</button>
     </div>
 </header>
 
-<main class="flex-1 container py-8 max-w-6xl">
-    
-    <!-- Admin Login -->
-    <div id="admin-login" class="max-w-md mx-auto card mt-10">
-        <h2 class="text-2xl font-bold mb-4 text-center">Admin Access Restricted</h2>
-        <div class="flex flex-col gap-4">
-            <input type="password" id="admin-password" class="input" placeholder="Enter Admin Password">
-            <button onclick="checkAdminPassword()" class="btn btn-primary">Login</button>
-            <p id="login-error" class="text-danger text-sm hidden">Incorrect Password.</p>
-        </div>
+<main class="flex-1" style="padding:1.25rem;max-width:1200px;margin:0 auto;width:100%;">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;">
+        <h1 style="font-size:clamp(1.4rem,4vw,1.875rem);font-weight:800;">
+            <span class="text-primary">Admin</span> Panel
+        </h1>
     </div>
 
-    <div id="loading" class="text-center py-10 hidden">Verifying Admin Privileges...</div>
+    <div id="loading" style="text-align:center;padding:3rem;color:var(--secondary-color);">Loading admin data...</div>
 
-    <div id="admin-content" class="flex flex-col md:flex-row gap-8 hidden">
-        <!-- Sidebar Navigation -->
-        <div class="w-full md:w-64 flex flex-col gap-2 sidebar-nav">
-            <button onclick="switchTab('users')" id="tab-users" class="sidebar-btn active">Manage Users</button>
-            <button onclick="switchTab('links')" id="tab-links" class="sidebar-btn">Moderate Links</button>
-            <button onclick="switchTab('payouts')" id="tab-payouts" class="sidebar-btn">Payout Requests</button>
-            <button onclick="switchTab('ads')" id="tab-ads" class="sidebar-btn">Ad Placements</button>
+    <div id="admin-content" class="hidden" style="display:none;">
+        <!-- Tabs - horizontal scroll on mobile -->
+        <div class="admin-tabs mb-4">
+            <button onclick="switchTab('users')" id="tab-users" class="tab-btn active">👥 Users</button>
+            <button onclick="switchTab('links')" id="tab-links" class="tab-btn">🔗 Links</button>
+            <button onclick="switchTab('payouts')" id="tab-payouts" class="tab-btn">💰 Payouts</button>
         </div>
 
-        <!-- Content Area -->
-        <div class="flex-1 card overflow-x-auto" style="min-height: 500px">
-            
-            <!-- Users Tab -->
+        <!-- Content -->
+        <div class="card" style="min-height:400px;">
+
+            <!-- Users -->
             <div id="view-users" class="admin-view">
-                <h2 class="text-xl font-bold mb-6">Registered Users</h2>
-                <table class="w-full text-sm">
-                    <thead><tr><th>Email</th><th>Role</th><th>Total Earnings</th></tr></thead>
-                    <tbody id="admin-users-list"></tbody>
-                </table>
-            </div>
-
-            <!-- Links Tab -->
-            <div id="view-links" class="admin-view hidden">
-                <h2 class="text-xl font-bold mb-6">All Links</h2>
-                <table class="w-full text-sm">
-                    <thead><tr><th>Code</th><th>Original URL</th><th>Status</th><th>Actions</th></tr></thead>
-                    <tbody id="admin-links-list"></tbody>
-                </table>
-            </div>
-
-            <!-- Payouts Tab -->
-            <div id="view-payouts" class="admin-view hidden">
-                <h2 class="text-xl font-bold mb-6">Payout Requests</h2>
-                <table class="w-full text-sm">
-                    <thead><tr><th>User ID</th><th>Amount</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead>
-                    <tbody id="admin-payouts-list"></tbody>
-                </table>
-            </div>
-
-            <!-- Ads Tab -->
-            <div id="view-ads" class="admin-view hidden">
-                <h2 class="text-xl font-bold mb-6">Ad Placement Controls</h2>
-                <p class="text-sm text-secondary mb-4">Paste the HTML / Script code for each ad zone. These update instantly across the site.</p>
-                
-                <div class="flex flex-col gap-6">
-                    <div class="card bg-bg-color">
-                        <label class="block font-bold mb-2">Global &lt;head&gt; Scripts</label>
-                        <textarea id="ad-head" class="input font-mono w-full h-24 mb-2" placeholder="<script>...</script>"></textarea>
-                        <button onclick="saveAd('head_script', 'ad-head')" class="btn btn-primary btn-sm">Save Head Scripts</button>
-                    </div>
-
-                    <div class="card bg-bg-color">
-                        <label class="block font-bold mb-2">Top Banner (728x90) - index & redirect pages</label>
-                        <textarea id="ad-banner-top" class="input font-mono w-full h-24 mb-2" placeholder="<div data-mndbanid='...'></div>"></textarea>
-                        <button onclick="saveAd('banner_top', 'ad-banner-top')" class="btn btn-primary btn-sm">Save Top Banner</button>
-                    </div>
-
-                    <div class="card bg-bg-color">
-                        <label class="block font-bold mb-2">Square Ad (300x250) - redirect specific</label>
-                        <textarea id="ad-square" class="input font-mono w-full h-24 mb-2" placeholder="<div data-mndbanid='...'></div>"></textarea>
-                        <button onclick="saveAd('ad_square', 'ad-square')" class="btn btn-primary btn-sm">Save Square Ad</button>
-                    </div>
-
-                    <div class="card bg-bg-color">
-                        <label class="block font-bold mb-2">Bottom Banner</label>
-                        <textarea id="ad-banner-bottom" class="input font-mono w-full h-24 mb-2" placeholder="<div data-mndbanid='...'></div>"></textarea>
-                        <button onclick="saveAd('banner_bottom', 'ad-banner-bottom')" class="btn btn-primary btn-sm">Save Bottom Banner</button>
-                    </div>
+                <h2 class="font-bold mb-4" style="font-size:1.1rem;">Registered Users</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Email / ID</th><th>Role</th><th>Earnings</th></tr></thead>
+                        <tbody id="admin-users-list"></tbody>
+                    </table>
                 </div>
+            </div>
+
+            <!-- Links -->
+            <div id="view-links" class="admin-view hidden">
+                <h2 class="font-bold mb-4" style="font-size:1.1rem;">All Links</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>Code</th><th>Original URL</th><th>Clicks</th><th>Status</th><th>Action</th></tr></thead>
+                        <tbody id="admin-links-list"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payouts -->
+            <div id="view-payouts" class="admin-view hidden">
+                <h2 class="font-bold mb-4" style="font-size:1.1rem;">Payout Requests</h2>
+                <div class="table-wrap">
+                    <table>
+                        <thead><tr><th>User</th><th>Amount</th><th>Method</th><th>Status</th><th>Actions</th></tr></thead>
+                        <tbody id="admin-payouts-list"></tbody>
+                    </table>
+                </div>
+                <div id="no-payouts-msg" class="text-center py-8 text-secondary hidden">No payout requests found.</div>
             </div>
 
         </div>
     </div>
 </main>
 
+<footer>
+    <div class="footer-inner text-secondary text-sm">
+        <div>&copy; 2026 SnipAd. All rights reserved.</div>
+    </div>
+</footer>
+
 <script>
-let usersData = [];
-let linksData = [];
-let payoutsData = [];
+let usersData = [], linksData = [], payoutsData = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Wait for password
-});
-
-function checkAdminPassword() {
-    const pw = document.getElementById('admin-password').value;
-    if(pw === '113003') {
-        document.getElementById('admin-login').classList.add('hidden');
-        document.getElementById('loading').classList.remove('hidden');
-        loadAdminDashboard();
-    } else {
-        document.getElementById('login-error').classList.remove('hidden');
-    }
-}
-
-async function loadAdminDashboard() {
     try {
         await fetchGlobalData();
-        await fetchAds();
         document.getElementById('loading').classList.add('hidden');
-        document.getElementById('admin-content').classList.remove('hidden');
-        document.getElementById('admin-content').style.display = 'flex';
+        const ac = document.getElementById('admin-content');
+        ac.classList.remove('hidden');
+        ac.style.display = 'block';
     } catch(err) {
-        document.getElementById('loading').innerText = "An error occurred fetching data.";
+        document.getElementById('loading').innerText = "Error loading admin data.";
+        console.error(err);
     }
-}
-
-async function fetchAds() {
-    const { data } = await window.supabaseClient.from('settings').select('*');
-    if(data) {
-        data.forEach(setting => {
-            if(setting.key === 'head_script') document.getElementById('ad-head').value = setting.value || '';
-            if(setting.key === 'banner_top') document.getElementById('ad-banner-top').value = setting.value || '';
-            if(setting.key === 'banner_bottom') document.getElementById('ad-banner-bottom').value = setting.value || '';
-            if(setting.key === 'ad_square') document.getElementById('ad-square').value = setting.value || '';
-        });
-    }
-}
-
-async function saveAd(keyName, inputId) {
-    const val = document.getElementById(inputId).value;
-    const btn = event.target;
-    const originalText = btn.innerText;
-    btn.innerText = "Saving...";
-    
-    const { error } = await window.supabaseClient.from('settings').upsert({ key: keyName, value: val });
-    
-    if(!error) {
-        btn.innerText = "Saved!";
-    } else {
-        btn.innerText = "Error!";
-        alert(error.message);
-    }
-    setTimeout(() => { btn.innerText = originalText; }, 2000);
-}
+});
 
 async function fetchGlobalData() {
-    // Bring all data
-    const resUsers = await window.supabaseClient.from('profiles').select('*');
-    usersData = resUsers.data || [];
-    renderUsers();
-
-    const resLinks = await window.supabaseClient.from('links').select('*');
-    linksData = resLinks.data || [];
-    renderLinks();
-
-    const resPayouts = await window.supabaseClient.from('payouts').select('*');
-    payoutsData = resPayouts.data || [];
-    renderPayouts();
+    const [ru, rl, rp] = await Promise.all([
+        window.supabaseClient.from('profiles').select('*'),
+        window.supabaseClient.from('links').select('*').order('created_at', { ascending: false }),
+        window.supabaseClient.from('payouts').select('*').order('created_at', { ascending: false })
+    ]);
+    usersData = ru.data || [];
+    linksData = rl.data || [];
+    payoutsData = rp.data || [];
+    renderUsers(); renderLinks(); renderPayouts();
 }
 
 function renderUsers() {
     const tbody = document.getElementById('admin-users-list');
     tbody.innerHTML = '';
+    if (!usersData.length) { tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--secondary-color);">No users yet.</td></tr>'; return; }
     usersData.forEach(u => {
-        tbody.innerHTML += `
-            <tr class="border-b border-color">
-                <td class="font-medium text-primary">${u.email || u.id}</td>
-                <td><span class="badge ${u.role==='admin' ? 'badge-danger' : 'badge-success'}">${u.role}</span></td>
-                <td class="font-bold">$${u.total_earnings || '0.00'}</td>
-            </tr>
-        `;
+        tbody.innerHTML += `<tr>
+            <td class="font-medium text-primary truncate" style="max-width:150px;" title="${u.email || u.id}">${u.email || u.id.substring(0,12) + '...'}</td>
+            <td><span class="badge ${u.role === 'admin' ? 'badge-danger' : 'badge-success'}">${u.role || 'user'}</span></td>
+            <td class="font-bold">$${u.total_earnings || '0.00'}</td>
+        </tr>`;
     });
 }
 
 function renderLinks() {
     const tbody = document.getElementById('admin-links-list');
     tbody.innerHTML = '';
+    if (!linksData.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--secondary-color);">No links yet.</td></tr>'; return; }
     linksData.forEach(l => {
-        tbody.innerHTML += `
-            <tr class="border-b border-color">
-                <td class="font-medium">${l.short_code}</td>
-                <td class="truncate" style="max-width:200px" title="${l.original_url}">${l.original_url}</td>
-                <td><span class="badge ${l.status==='banned' ? 'badge-danger' : 'badge-success'}">${l.status}</span></td>
-                <td>
-                    <button onclick="toggleBan('${l.id}', '${l.status}')" class="btn btn-secondary py-1 px-3 text-xs">
-                        ${l.status==='active' ? 'Ban' : 'Unban'}
-                    </button>
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML += `<tr>
+            <td class="font-medium" style="font-family:monospace;">${l.short_code}</td>
+            <td class="truncate text-secondary" style="max-width:140px;" title="${l.original_url}">${l.original_url}</td>
+            <td>${l.clicks || 0}</td>
+            <td><span class="badge ${l.status === 'banned' ? 'badge-danger' : 'badge-success'}">${l.status}</span></td>
+            <td><button onclick="toggleBan('${l.id}','${l.status}')" class="btn btn-secondary" style="padding:0.35rem 0.75rem;font-size:0.8rem;">${l.status === 'active' ? 'Ban' : 'Unban'}</button></td>
+        </tr>`;
     });
 }
 
 function renderPayouts() {
     const tbody = document.getElementById('admin-payouts-list');
     tbody.innerHTML = '';
+    if (!payoutsData.length) {
+        document.getElementById('no-payouts-msg').classList.remove('hidden');
+        return;
+    }
     payoutsData.forEach(p => {
-        tbody.innerHTML += `
-            <tr class="border-b border-color">
-                <td class="truncate" style="max-width:150px" title="${p.user_id}">${p.user_id}</td>
-                <td class="font-bold text-success-color">$${p.amount}</td>
-                <td class="uppercase">${p.method}</td>
-                <td><span class="badge ${p.status==='pending' ? 'badge-danger' : 'badge-success'}">${p.status}</span></td>
-                <td>
-                    ${p.status === 'pending' ? `
-                      <button onclick="updatePayout('${p.id}', 'approved')" class="btn btn-secondary py-1 px-3 text-xs text-success">Approve</button>
-                      <button onclick="updatePayout('${p.id}', 'rejected')" class="btn btn-secondary py-1 px-3 text-xs text-danger">Reject</button>
-                    ` : 'None'}
-                </td>
-            </tr>
-        `;
+        tbody.innerHTML += `<tr>
+            <td class="truncate" style="max-width:120px;" title="${p.user_id}">${(p.user_id || '').substring(0, 10)}...</td>
+            <td class="font-bold text-success">$${p.amount}</td>
+            <td class="uppercase">${p.method}</td>
+            <td><span class="badge ${p.status === 'pending' ? 'badge-danger' : 'badge-success'}">${p.status}</span></td>
+            <td style="display:flex;gap:0.4rem;">
+                ${p.status === 'pending' ? `
+                <button onclick="updatePayout('${p.id}','approved')" class="btn btn-secondary" style="padding:0.3rem 0.65rem;font-size:0.8rem;color:var(--success-color);">✓</button>
+                <button onclick="updatePayout('${p.id}','rejected')" class="btn btn-secondary" style="padding:0.3rem 0.65rem;font-size:0.8rem;color:var(--danger-color);">✗</button>
+                ` : '-'}
+            </td>
+        </tr>`;
     });
 }
 
 function switchTab(tabName) {
     document.querySelectorAll('.admin-view').forEach(el => el.classList.add('hidden'));
     document.getElementById('view-' + tabName).classList.remove('hidden');
-
-    document.querySelectorAll('[id^="tab-"]').forEach(el => {
-        el.className = 'sidebar-btn';
-    });
-    document.getElementById('tab-' + tabName).className = 'sidebar-btn active';
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tabName).classList.add('active');
 }
 
 async function toggleBan(linkId, currentStatus) {
     const newStatus = currentStatus === 'active' ? 'banned' : 'active';
     await window.supabaseClient.from('links').update({ status: newStatus }).eq('id', linkId);
-    fetchGlobalData(); // reload
+    await fetchGlobalData();
 }
 
 async function updatePayout(id, newStatus) {
     await window.supabaseClient.from('payouts').update({ status: newStatus }).eq('id', id);
-    fetchGlobalData(); // reload
+    await fetchGlobalData();
 }
 </script>
 

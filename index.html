@@ -3,102 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="mnd-ver" content="dsnacmhmqkdohqh4ewdfa" />
-    <script async src="https://ss.mrmnd.com/interstitial.js" data-mndintid="2b85e1ed-b9f7-47e0-a3a2-2bb8de405809"></script>
-    <script async src="https://ss.mrmnd.com/native.js"></script>
-    <script async src="https://ss.mrmnd.com/static/7384f9cf-5c3b-4538-8617-ada8d46969fd.js"></script>
     <meta name="ppck-ver" content="b05101ee164099e7fc9bde841efbc78a" />
+    <meta name="mnd-ver" content="dsnacmhmqkdohqh4ewdfa" />
+    <meta name="description" content="SnipAd - Shorten URLs and earn money. Highest CPM rates with instant payouts.">
     <title>SnipAd - Monetized URL Shortener</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/supabase.js"></script>
     <script src="assets/main.js"></script>
+    <script async src="https://ss.mrmnd.com/interstitial.js" data-mndintid="2b85e1ed-b9f7-47e0-a3a2-2bb8de405809"></script>
+    <script async src="https://ss.mrmnd.com/native.js"></script>
+    <script async src="https://ss.mrmnd.com/static/7384f9cf-5c3b-4538-8617-ada8d46969fd.js"></script>
 </head>
 <body>
 
+<!-- HEADER -->
 <header>
-    <div class="container py-4 flex items-center justify-between">
-        <a href="index.html" class="flex items-center gap-2 font-bold text-xl text-primary">
-            SnipAd
-        </a>
-        <nav class="flex items-center gap-6">
-            <button id="theme-toggle" class="btn btn-secondary text-sm">Dark Mode</button>
-            <div id="auth-links" class="flex items-center">
-                <!-- Injected via JS -->
-            </div>
-        </nav>
+    <div class="navbar-inner">
+        <a href="index.html" class="navbar-logo">⚡ SnipAd</a>
+
+        <!-- Desktop Nav -->
+        <div class="navbar-links">
+            <button id="theme-toggle" class="btn btn-secondary" style="font-size:0.9rem;padding:0.6rem 1rem;">Dark Mode</button>
+            <div id="auth-links" style="display:flex;gap:0.5rem;"></div>
+        </div>
+
+        <!-- Hamburger -->
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+
+    <!-- Mobile Drawer -->
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="dashboard.html" class="btn btn-secondary">Dashboard</a>
+        <a href="admin.html" class="btn btn-primary">Admin Panel</a>
+        <button id="theme-toggle-mobile" class="btn btn-secondary">Dark Mode</button>
     </div>
 </header>
 
+<!-- MAIN -->
 <main class="flex-1 flex flex-col">
-    <!-- Top Ad Banner Placeholder -->
-    <div class="container" id="ad-zone-top">
-        <div class="ad-placeholder flex justify-center items-center">
-            <div data-mndbanid="48c0404c-5b20-4fd3-b7b0-ccf04fbc3d35"></div>
-        </div>
+
+    <!-- Top Ad -->
+    <div class="container">
+        <div class="ad-placeholder">Advertisement</div>
     </div>
 
-    <section class="hero-gradient py-16 flex-1 flex flex-col items-center justify-center text-center px-4">
-        <div class="w-full" style="max-width: 48rem; margin: 0 auto">
-            <h1 class="text-4xl font-bold mb-4">Shorten URLs, <span class="text-primary">Earn Money</span>.</h1>
-            <p class="text-xl text-secondary mb-8">The premium URL shortener network that pays you for your traffic. Highest CPM rates.</p>
+    <!-- Hero Section -->
+    <section class="hero-gradient flex-1 flex flex-col items-center justify-center text-center py-16" style="padding-left:1.25rem;padding-right:1.25rem;">
+        <div style="width:100%;max-width:44rem;margin:0 auto;">
+            <h1 class="hero-title">Shorten URLs, <span class="text-primary">Earn Money</span>.</h1>
+            <p class="hero-sub">The premium URL shortener that pays you for every visitor. Earn through ads on every link click.</p>
 
-            <div class="card text-left">
-                <form id="shorten-form" class="flex flex-col gap-4">
-                    <div class="flex flex-col md:flex-row gap-4">
-                        <input type="url" id="url-input" class="input flex-1" placeholder="Paste your long URL here... https://" required>
-                        <button type="submit" id="shorten-btn" class="btn btn-primary whitespace-nowrap">Shorten URL</button>
+            <!-- Shortener Card -->
+            <div class="card text-left" style="box-shadow:0 8px 32px rgba(59,130,246,0.10);">
+                <form id="shorten-form">
+                    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                        <input 
+                            type="url" 
+                            id="url-input" 
+                            class="input" 
+                            placeholder="Paste your long URL here... https://" 
+                            required
+                            style="font-size:1rem;"
+                        >
+                        <button type="submit" id="shorten-btn" class="btn btn-primary w-full" style="padding:0.9rem;font-size:1rem;">
+                            ✂️ Shorten URL
+                        </button>
                     </div>
                 </form>
 
-                <div id="error-msg" class="mt-4 p-4 badge badge-danger hidden"></div>
+                <div id="error-msg" class="mt-4 badge badge-danger hidden" style="width:100%;text-align:center;padding:0.75rem;"></div>
 
-                <div id="result-box" class="mt-6 p-4 border border-color bg-bg-color rounded-lg hidden flex items-center justify-between">
-                    <div>
-                        <p class="text-sm text-success mb-1">Your shortened URL is ready:</p>
-                        <a id="short-url" href="" target="_blank" class="text-xl font-bold text-primary"></a>
+                <div id="result-box" class="result-box mt-4 hidden">
+                    <div style="flex:1;min-width:0;">
+                        <p class="text-sm text-success mb-2" style="font-weight:600;">✅ Your shortened URL is ready:</p>
+                        <a id="short-url" href="" target="_blank" class="result-url"></a>
                     </div>
-                    <button id="copy-btn" class="btn btn-secondary">Copy</button>
+                    <button id="copy-btn" class="btn btn-secondary" style="flex-shrink:0;">📋 Copy</button>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Bottom Ad Banner Placeholder -->
-    <div class="container" id="ad-zone-bottom">
-        <div class="ad-placeholder my-8">
-            Mid-Page Banner Ad Placement (970x250)
-        </div>
+    <!-- Mid Ad -->
+    <div class="container">
+        <div class="ad-placeholder" style="min-height:120px;">Advertisement</div>
     </div>
+
+    <!-- Features -->
+    <section style="background:var(--card-bg);border-top:1px solid var(--border-color);">
+        <div style="max-width:1200px;margin:0 auto;padding:3rem 1.25rem;">
+            <h2 style="text-align:center;font-size:clamp(1.5rem,3vw,2rem);font-weight:800;margin-bottom:2.5rem;">Why Choose SnipAd?</h2>
+            <div class="feature-grid" style="padding:0;">
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(59,130,246,0.12);">💰</div>
+                    <h3 style="font-weight:700;font-size:1.1rem;margin-bottom:0.5rem;">High CPM Rates</h3>
+                    <p style="color:var(--secondary-color);font-size:0.95rem;">Earn effectively for every 1000 visitors through interstitial and banner ads.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(34,197,94,0.12);">⚡</div>
+                    <h3 style="font-weight:700;font-size:1.1rem;margin-bottom:0.5rem;">Quick Payouts</h3>
+                    <p style="color:var(--secondary-color);font-size:0.95rem;">Withdraw via UPI, PayPal, or Bank Transfer starting at just $5.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon" style="background:rgba(139,92,246,0.12);">🛡️</div>
+                    <h3 style="font-weight:700;font-size:1.1rem;margin-bottom:0.5rem;">Safe & Secure</h3>
+                    <p style="color:var(--secondary-color);font-size:0.95rem;">Bot filtering and spam protection to ensure high-quality, real traffic.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </main>
 
+<!-- FOOTER -->
 <footer>
-    <div class="container py-8 flex justify-between items-center text-secondary text-sm">
+    <div class="footer-inner text-secondary text-sm">
         <div>&copy; 2026 SnipAd. All rights reserved.</div>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+            <a href="#" class="text-secondary">Terms</a>
+            <a href="#" class="text-secondary">Privacy</a>
+            <a href="#" class="text-secondary">API</a>
+            <a href="#" class="text-secondary">Contact</a>
+        </div>
     </div>
 </footer>
 
 <script>
 document.getElementById('shorten-form').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const url = document.getElementById('url-input').value;
+    const url = document.getElementById('url-input').value.trim();
     const btn = document.getElementById('shorten-btn');
     const resultBox = document.getElementById('result-box');
     const shortUrlEl = document.getElementById('short-url');
     const errorMsg = document.getElementById('error-msg');
-    
+
     btn.innerText = 'Shortening...';
     btn.disabled = true;
     errorMsg.classList.add('hidden');
     resultBox.classList.add('hidden');
 
     try {
-        const userId = null; // Free public access
         const code = generateShortCode();
-
         const { data, error } = await window.supabaseClient
             .from('links')
-            .insert([{ original_url: url, short_code: code, user_id: userId }]);
+            .insert([{ original_url: url, short_code: code, user_id: null }]);
 
         if (error) throw error;
 
@@ -107,20 +160,22 @@ document.getElementById('shorten-form').addEventListener('submit', async (e) => 
         shortUrlEl.innerText = fullShortUrl;
         resultBox.classList.remove('hidden');
         document.getElementById('url-input').value = '';
-
     } catch (err) {
-        errorMsg.innerText = err.message || 'Error occurred';
+        errorMsg.innerText = err.message || 'Error occurred. Please try again.';
         errorMsg.classList.remove('hidden');
     } finally {
-        btn.innerText = 'Shorten URL';
+        btn.innerText = '✂️ Shorten URL';
         btn.disabled = false;
     }
 });
 
 document.getElementById('copy-btn').addEventListener('click', () => {
-    navigator.clipboard.writeText(document.getElementById('short-url').href);
-    document.getElementById('copy-btn').innerText = 'Copied!';
-    setTimeout(() => { document.getElementById('copy-btn').innerText = 'Copy'; }, 2000);
+    const urlText = document.getElementById('short-url').href;
+    navigator.clipboard.writeText(urlText).then(() => {
+        const btn = document.getElementById('copy-btn');
+        btn.innerText = '✅ Copied!';
+        setTimeout(() => { btn.innerText = '📋 Copy'; }, 2000);
+    });
 });
 </script>
 

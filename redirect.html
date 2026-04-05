@@ -3,78 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="mnd-ver" content="dsnacmhmqkdohqh4ewdfa" />
-    <script async src="https://ss.mrmnd.com/interstitial.js" data-mndintid="2b85e1ed-b9f7-47e0-a3a2-2bb8de405809"></script>
-    <script async src="https://ss.mrmnd.com/native.js"></script>
-    <script async src="https://ss.mrmnd.com/static/7384f9cf-5c3b-4538-8617-ada8d46969fd.js"></script>
     <title>Redirecting... - SnipAd</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="assets/style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="assets/supabase.js"></script>
+    <script src="assets/main.js"></script>
+    <style>
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .spinner { width:3rem;height:3rem;border:3px solid var(--border-color);border-top-color:var(--primary-color);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem; }
+    </style>
 </head>
-<body>
+<body class="flex flex-col">
 
-<!-- Top Ad Banner Placeholder -->
-<div id="ad-zone-top" class="ad-placeholder flex justify-center items-center" style="max-width: 1200px; margin: 1rem auto;">
-    <div data-mndbanid="48c0404c-5b20-4fd3-b7b0-ccf04fbc3d35"></div>
+<header>
+    <div class="navbar-inner">
+        <a href="index.html" class="navbar-logo">⚡ SnipAd</a>
+        <div class="navbar-links">
+            <button id="theme-toggle" class="btn btn-secondary" style="font-size:0.9rem;padding:0.6rem 1rem;">Dark Mode</button>
+            <a href="index.html" class="btn btn-primary" style="font-size:0.9rem;padding:0.6rem 1rem;">Shorten URL</a>
+        </div>
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+    <div class="mobile-menu" id="mobile-menu">
+        <a href="index.html" class="btn btn-primary">Shorten URL</a>
+        <button id="theme-toggle-mobile" class="btn btn-secondary">Dark Mode</button>
+    </div>
+</header>
+
+<!-- Top Ad -->
+<div class="container">
+    <div class="ad-placeholder">Advertisement</div>
 </div>
 
-<main class="flex-1 container flex flex-col items-center justify-center py-8">
+<main class="flex-1 flex flex-col items-center justify-center" style="padding:1.5rem 1.25rem;">
+
     <div id="loading-state" class="text-center">
-        <h2 class="text-xl text-secondary mb-4">Looking up link...</h2>
+        <div class="spinner"></div>
+        <p class="text-secondary">Looking up link...</p>
     </div>
 
-    <div id="error-state" class="card max-w-lg w-full text-center border-danger-color hidden">
-        <h2 class="text-2xl font-bold text-danger mb-4">Oops!</h2>
-        <p id="error-msg-text" class="text-secondary mb-6"></p>
-        <a href="index.html" class="btn btn-primary">Return Home</a>
+    <div id="error-state" class="card hidden text-center" style="max-width:28rem;width:100%;">
+        <div style="font-size:3rem;margin-bottom:1rem;">⚠️</div>
+        <h2 class="font-bold text-xl mb-2 text-danger">Link Error</h2>
+        <p id="error-msg-text" class="text-secondary mb-4"></p>
+        <a href="index.html" class="btn btn-primary w-full">Return Home</a>
     </div>
 
-    <div id="countdown-state" class="card max-w-lg w-full text-center flex flex-col items-center hidden">
-        <h1 class="text-3xl font-bold mb-6">Your link is almost ready</h1>
-        
+    <div id="countdown-state" class="card hidden text-center" style="max-width:32rem;width:100%;">
+        <h1 style="font-size:clamp(1.2rem,4vw,1.75rem);font-weight:800;margin-bottom:1.25rem;">Your link is almost ready</h1>
+
         <!-- Ad Square -->
-        <div id="ad-zone-square" class="w-full ad-placeholder ad-square mb-6">
-            Ad Square Placement (300x250)
+        <div class="ad-placeholder ad-square mb-4">Advertisement (300x250)</div>
+
+        <div id="timer-box">
+            <p class="text-secondary mb-3" style="font-size:0.95rem;">Please wait for the timer...</p>
+            <div class="timer-circle" id="timer-number">15</div>
+            <button disabled class="btn btn-secondary" style="opacity:0.5;cursor:not-allowed;width:100%;">Getting Link...</button>
         </div>
 
-        <div id="timer-box" class="mb-6">
-            <p class="text-lg text-secondary mb-2">Please wait...</p>
-            <div id="timer-number" class="h-16 w-16 bg-primary rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4" style="border-radius: 50%;">
-                15
-            </div>
-            <button disabled class="btn btn-secondary cursor-not-allowed opacity-50 px-8">
-                Getting Link...
-            </button>
-        </div>
-
-        <div id="ready-box" class="mb-6 hidden">
-            <p class="text-lg text-success mb-4 font-medium">Ready!</p>
-            <a id="final-link" href="#" class="btn btn-primary px-8 py-3 text-lg" style="animation: pulse 2s infinite;">
-                Get Link
+        <div id="ready-box" class="hidden">
+            <p style="color:var(--success-color);font-weight:700;margin-bottom:1rem;">✅ Ready! Click below to proceed.</p>
+            <a id="final-link" href="#" class="btn btn-primary w-full" style="font-size:1.1rem;padding:1rem;">
+                🔗 Get Link
             </a>
         </div>
     </div>
+
 </main>
 
-<!-- Bottom Banner Ad -->
-<div id="ad-zone-bottom" class="ad-placeholder" style="max-width: 1200px; margin: 1rem auto;">
-    Bottom Banner Ad Placement
+<!-- Bottom Ad -->
+<div class="container">
+    <div class="ad-placeholder">Advertisement</div>
 </div>
 
-<style>
-@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-</style>
+<footer>
+    <div class="footer-inner text-secondary text-sm">
+        <div>&copy; 2026 SnipAd</div>
+        <a href="index.html" class="text-secondary">Shorten your own URL →</a>
+    </div>
+</footer>
 
 <script>
 document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const shortCode = urlParams.get('id');
-    
-    if (!shortCode) {
-        showError("Invalid or missing short code.");
-        return;
-    }
+
+    if (!shortCode) { showError("Invalid or missing short code."); return; }
 
     try {
         const { data, error } = await window.supabaseClient
@@ -86,7 +104,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (error || !data) throw new Error('Link not found or invalid.');
         if (data.status === 'banned') throw new Error('This link has been banned.');
 
-        // Record a click asynchronously
+        // Record click async
         window.supabaseClient.from('clicks').insert([{
             link_id: data.id,
             referrer: document.referrer || 'direct',
@@ -112,19 +130,16 @@ function startCountdown(targetUrl) {
 
     let timeLeft = 15;
     const timerNumber = document.getElementById('timer-number');
-    
+
     const interval = setInterval(() => {
         timeLeft -= 1;
         timerNumber.innerText = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(interval);
             document.getElementById('timer-box').classList.add('hidden');
-            document.getElementById('ready-box').classList.remove('hidden');
-            const finalLink = document.getElementById('final-link');
-            finalLink.href = targetUrl;
-            
-            // Auto-redirect mechanism (optional, keeping it manual for user interaction with ads)
-            // window.location.href = targetUrl; 
+            const readyBox = document.getElementById('ready-box');
+            readyBox.classList.remove('hidden');
+            document.getElementById('final-link').href = targetUrl;
         }
     }, 1000);
 }
